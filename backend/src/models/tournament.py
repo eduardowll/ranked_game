@@ -32,6 +32,11 @@ class VideoCreate(BaseModel):
     url_youtube: str
     nome: str
 
+class TournamentCreate(BaseModel):
+    """Dados necessários para criar um torneio"""
+    titulo: str
+    urls_youtube: List[str]
+
 class MatchupResult(BaseModel):
     """Quando um 1v1 acontece na tela, o Frontend avisa quem ganhou e quem perdeu"""
     vencedor_id: str
