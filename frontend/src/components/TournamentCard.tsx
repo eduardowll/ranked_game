@@ -26,6 +26,9 @@ export default function TournamentCard({ torneio, onClick }: TournamentCardProps
       <span style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase' }}>Torneio</span>
       <h2 style={{ margin: '0.65rem 0' }}>{torneio.titulo}</h2>
       <p style={{ margin: 0 }}>{torneio.video_ids.length} músicas</p>
+      <p style={{ margin: '0.35rem 0 0', fontWeight: 700 }}>
+        {torneio.estado === 'em_andamento' ? 'Em andamento' : 'Jogar'}
+      </p>
     </button>
   );
 }

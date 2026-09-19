@@ -22,3 +22,6 @@ class VideoRepository:
         """Busca todos os vídeos cadastrados para o ranking global"""
         docs = self.collection.stream()
         return [VideoItem(**doc.to_dict()) for doc in docs]
+
+    def delete_video(self, video_id: str):
+        self.collection.document(video_id).delete()

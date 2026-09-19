@@ -1,4 +1,20 @@
+import { firebaseAuth } from './firebase';
+
 const BASE_URL = "http://127.0.0.1:8000";
+
+async function parseResponse<T>(resposta: Response): Promise<T> {
+  const payload = await resposta.json().catch(() => null);
+  if (!resposta.ok) {
+    throw new Error(payload?.detail || 'Erro ao comunicar com a API');
+  }
+  return payload as T;
+}
+
+async function authHeaders(): Promise<HeadersInit> {
+  const user = firebaseAuth.currentUser;
+  if (!user) throw new Error('Entre com sua conta Google para continuar.');
+  return { Authorization: `Bearer ${await user.getIdToken()}` };
+}
 
 export interface VideoItem {
   video_id: string;
@@ -12,6 +28,7 @@ export interface TournamentItem {
   descricao?: string;
   video_ids: string[];
   estatisticas_videos?: Record<string, VideoStats>;
+  estado: 'aberto' | 'em_andamento';
 }
 
 export interface VideoStats {
@@ -23,6 +40,14 @@ export interface VideoStats {
 export interface PartidaResponse {
   torneio_id: string;
   videos: VideoItem[];
+  estado: 'aberto' | 'em_andamento';
+  partida: {
+    fila_ids: string[];
+    vencedores_ids: string[];
+    rodada: number;
+    duelo_atual: number;
+    duelos_na_rodada: number;
+  };
 }
 
 export interface VideoRankingItem extends VideoItem {
@@ -53,37 +78,41 @@ export const api = {
   
   iniciarPartida: async (torneioId: string): Promise<PartidaResponse> => {
     const resposta = await fetch(`${BASE_URL}/torneios/${torneioId}/jogar`);
-    if (!resposta.ok) throw new Error("Erro ao carregar o torneio");
-    return await resposta.json();
+    return parseResponse<PartidaResponse>(resposta);
   },
 
   listarVideos: async (): Promise<VideoItem[]> => {
     const resposta = await fetch(`${BASE_URL}/videos`);
-    if (!resposta.ok) throw new Error("Erro ao carregar músicas");
-    return await resposta.json();
+    return parseResponse<VideoItem[]>(resposta);
   },
 
   cadastrarVideo: async (urlYoutube: string): Promise<VideoItem> => {
+    const headers = await authHeaders();
     const resposta = await fetch(`${BASE_URL}/videos`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify({ url_youtube: urlYoutube }),
     });
-    if (!resposta.ok) throw new Error("Erro ao cadastrar música");
-    return await resposta.json();
+    return parseResponse<VideoItem>(resposta);
+  },
+
+  excluirVideo: async (videoId: string): Promise<void> => {
+    const headers = await authHeaders();
+    const resposta = await fetch(`${BASE_URL}/videos/${videoId}`, { method: 'DELETE', headers });
+    await parseResponse<null>(resposta);
   },
 
   criarTorneio: async (titulo: string): Promise<{ mensagem: string; id: string }> => {
+    const headers = await authHeaders();
     const resposta = await fetch(`${BASE_URL}/torneios`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify({ titulo }),
     });
-    if (!resposta.ok) throw new Error("Erro ao criar torneio");
-    return await resposta.json();
+    return parseResponse<{ mensagem: string; id: string }>(resposta);
   },
 
-  registrarDuelo: async (torneioId: string, vencedorId: string, perdedorId: string): Promise<{ mensagem: string }> => {
+  registrarDuelo: async (torneioId: string, vencedorId: string, perdedorId: string): Promise<PartidaResponse> => {
     const resposta = await fetch(`${BASE_URL}/duelos/resultado`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -93,18 +122,7 @@ export const api = {
         torneio_id: torneioId,
       }),
     });
-    return await resposta.json();
+    return parseResponse<PartidaResponse>(resposta);
   },
 
-  finalizarTorneio: async (torneioId: string, campeaoId: string): Promise<{ mensagem: string }> => {
-    const resposta = await fetch(`${BASE_URL}/torneios/finalizar`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        torneio_id: torneioId,
-        campeao_id: campeaoId
-      }),
-    });
-    return await resposta.json();
-  }
 };

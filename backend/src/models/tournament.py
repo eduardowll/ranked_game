@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 # ---------------------------------------------------------
 # 1. MODELOS DE BANCO DE DADOS 
@@ -18,6 +18,9 @@ class TournamentTheme(BaseModel):
     descricao: Optional[str] = None
     video_ids: List[str]      
     estatisticas_videos: dict = Field(default_factory=dict)
+    estado: Literal['aberto', 'em_andamento'] = 'aberto'
+    partida: Optional[dict] = None
+    owner_uid: Optional[str] = None
 
 # ---------------------------------------------------------
 # 2. SCHEMAS DE REQUISIÇÃO
@@ -36,8 +39,3 @@ class MatchupResult(BaseModel):
     torneio_id: str
     vencedor_id: str
     perdedor_id: str
-
-class TournamentResult(BaseModel):
-    """Quando o torneio acaba, o Frontend avisa quem foi o grande campeão"""
-    torneio_id: str
-    campeao_id: str

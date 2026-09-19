@@ -1,6 +1,8 @@
 from fastapi import APIRouter, HTTPException
+from src.auth import get_current_user
+from fastapi import Depends
 from src.services.tournament_service import TournamentService
-from src.models.tournament import VideoCreate, TournamentCreate, MatchupResult, TournamentResult
+from src.models.tournament import VideoCreate, TournamentCreate, MatchupResult
 
 # Cria o roteador para este módulo
 router = APIRouter(tags=["Torneios"])
@@ -9,17 +11,18 @@ router = APIRouter(tags=["Torneios"])
 service = TournamentService()
 
 @router.post("/torneios", status_code=201)
-def criar_torneio(dados: TournamentCreate):
+def criar_torneio(dados: TournamentCreate, usuario: dict = Depends(get_current_user)):
     try:
         novo_torneio = service.create_new_tournament(
             titulo=dados.titulo,
+            owner_uid=usuario['uid'],
         )
         return {"mensagem": "Torneio criado com sucesso!", "id": novo_torneio.id}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/videos", status_code=201)
-def cadastrar_video(dados: VideoCreate):
+def cadastrar_video(dados: VideoCreate, usuario: dict = Depends(get_current_user)):
     try:
         video = service.add_video_to_catalog(dados.url_youtube)
         return video
@@ -29,6 +32,13 @@ def cadastrar_video(dados: VideoCreate):
 @router.get("/videos")
 def listar_videos():
     return service.video_repo.get_all_videos()
+
+@router.delete("/videos/{video_id}", status_code=204)
+def excluir_video(video_id: str, usuario: dict = Depends(get_current_user)):
+    try:
+        service.delete_video_from_catalog(video_id)
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e))
 
 @router.get("/torneios")
 def listar_torneios():
@@ -50,30 +60,18 @@ def detalhes_torneio(torneio_id: str):
 @router.get("/torneios/{torneio_id}/jogar")
 def iniciar_partida(torneio_id: str):
     try:
-        videos = service.get_shuffled_videos_for_tournament(torneio_id)
-        return {"torneio_id": torneio_id, "videos": videos}
-    except Exception as e:
-        raise HTTPException(status_code=404, detail="Torneio não encontrado.")
+        return service.start_tournament(torneio_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 @router.post("/duelos/resultado")
 def registrar_duelo(resultado: MatchupResult):
     try:
-        service.register_match_winner(
+        resposta = service.register_match_winner(
             tournament_id=resultado.torneio_id,
             vencedor_id=resultado.vencedor_id, 
             perdedor_id=resultado.perdedor_id
         )
-        return {"mensagem": "Resultado computado"}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@router.post("/torneios/finalizar")
-def finalizar_torneio(resultado: TournamentResult):
-    try:
-        service.finish_tournament(
-            tournament_id=resultado.torneio_id, 
-            campeao_id=resultado.campeao_id
-        )
-        return {"mensagem": "Estatísticas do torneio atualizadas!"}
-    except Exception as e:
+        return resposta
+    except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

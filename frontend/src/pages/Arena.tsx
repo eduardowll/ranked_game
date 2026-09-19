@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import ChampionCard from '../components/ChampionCard';
 import VideoCard from '../components/VideoCard';
 import { api } from '../services/api';
@@ -6,22 +7,28 @@ import type { VideoItem } from '../services/api';
 
 export default function Arena() {
   const [fila, setFila] = useState<VideoItem[]>([]);
-  const [vencedoresRodada, setVencedoresRodada] = useState<VideoItem[]>([]);
   const [dueloAtual, setDueloAtual] = useState(1);
   const [duelosNaRodada, setDuelosNaRodada] = useState(1);
   const [carregando, setCarregando] = useState(true);
   const [mensagem, setMensagem] = useState('');
-  const campeaoFinalizado = useRef<string | null>(null);
+  const [salvando, setSalvando] = useState(false);
 
-  const query = new URLSearchParams(window.location.search);
-  const torneioId = query.get('torneioId') ?? localStorage.getItem('torneioId') ?? 'VijZEtAMdWEFe8d4KEGu';
+  const [searchParams] = useSearchParams();
+  const torneioId = searchParams.get('torneioId');
 
   useEffect(() => {
+    if (!torneioId) {
+      return;
+    }
+
+    const idDoTorneio = torneioId;
+
     async function prepararArena() {
       try {
-        const dados = await api.iniciarPartida(torneioId);
+        const dados = await api.iniciarPartida(idDoTorneio);
         setFila(dados.videos);
-        setDuelosNaRodada(Math.ceil(dados.videos.length / 2));
+        setDueloAtual(dados.partida.duelo_atual);
+        setDuelosNaRodada(dados.partida.duelos_na_rodada);
       } catch (erro) {
         console.error('Erro na Arena:', erro);
       } finally {
@@ -32,76 +39,25 @@ export default function Arena() {
     prepararArena();
   }, [torneioId]);
 
-  useEffect(() => {
-    if (fila.length !== 1) return;
-
-    const campeao = fila[0];
-    if (campeaoFinalizado.current === campeao.video_id) return;
-
-    campeaoFinalizado.current = campeao.video_id;
-    if (vencedoresRodada.length > 0) return;
-
-    api.finalizarTorneio(torneioId, campeao.video_id).catch((erro) => {
-      campeaoFinalizado.current = null;
-      console.error('Erro ao finalizar torneio:', erro);
-      setMensagem('Não foi possível salvar o campeão do torneio.');
-    });
-  }, [fila, torneioId, vencedoresRodada.length]);
-
-  useEffect(() => {
-    if (fila.length !== 1 || vencedoresRodada.length === 0) return;
-
-    const novosVencedores = [...vencedoresRodada, fila[0]];
-    if (novosVencedores.length === 1) {
-      setFila(novosVencedores);
-      return;
-    }
-
-    setFila(novosVencedores);
-    setVencedoresRodada([]);
-    setDueloAtual(1);
-    setDuelosNaRodada(Math.ceil(novosVencedores.length / 2));
-  }, [fila, vencedoresRodada]);
-
   const escolherVencedor = async (vencedor: VideoItem, perdedor: VideoItem) => {
+    if (salvando || !torneioId) return;
+    setSalvando(true);
     try {
-      await api.registrarDuelo(torneioId, vencedor.video_id, perdedor.video_id);
-
-      const restantes = fila.slice(2);
-      const novosVencedores = [...vencedoresRodada, vencedor];
-
-      if (restantes.length > 0) {
-        setFila(restantes);
-        setVencedoresRodada(novosVencedores);
-        setDueloAtual((atual) => atual + 1);
-        return;
-      }
-
-      if (novosVencedores.length === 1) {
-        setFila(novosVencedores);
-        return;
-      }
-
-      setFila(novosVencedores);
-      setVencedoresRodada([]);
-      setDueloAtual(1);
-      setDuelosNaRodada(Math.ceil(novosVencedores.length / 2));
+      const dados = await api.registrarDuelo(torneioId, vencedor.video_id, perdedor.video_id);
+      setFila(dados.videos);
+      setDueloAtual(dados.partida.duelo_atual);
+      setDuelosNaRodada(dados.partida.duelos_na_rodada);
     } catch (erro) {
       console.error('Erro ao registrar duelo:', erro);
       setMensagem('Não foi possível registrar a vitória.');
+    } finally {
+      setSalvando(false);
     }
   };
 
+  if (!torneioId) return <h2>Nenhum torneio foi selecionado.</h2>;
   if (carregando) return <h2>Carregando a arena... ⚔️</h2>;
   if (fila.length === 0) return <h2>Nenhum vídeo encontrado.</h2>;
-
-  if (fila.length === 1 && vencedoresRodada.length > 0) {
-    return (
-      <div className="round-transition" role="status">
-        <h2>Preparando a próxima rodada...</h2>
-      </div>
-    );
-  }
 
   if (fila.length === 1) {
     return <ChampionCard video={fila[0]} torneioId={torneioId} />;
