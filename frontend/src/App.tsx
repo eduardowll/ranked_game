@@ -6,7 +6,7 @@ import VideoCatalog from './pages/VideoCatalog';
 
 export default function App() {
   return (
-    <main style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
+    <main className="page-surface">
       <BrowserRouter>
         <Routes>
           <Route path="/torneios" element={<Tournaments />} />

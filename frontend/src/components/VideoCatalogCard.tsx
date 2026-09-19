@@ -8,7 +8,7 @@ interface VideoCatalogCardProps {
 
 export default function VideoCatalogCard({ video, onRemove, podeRemover }: VideoCatalogCardProps) {
   return (
-    <article style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'center', padding: '1rem', background: '#fff', border: '1px solid #ddd', borderRadius: 10 }}>
+    <article className="catalog-card" style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'center', padding: '1.25rem', border: '1px solid #4d3172', borderRadius: 18 }}>
       <div>
         <strong>{video.nome}</strong>
         <div>{video.url}</div>

@@ -9,7 +9,7 @@ export default function ChampionCard({ video, torneioId }: ChampionCardProps) {
   const titulo = video.nome || video.video_id;
 
   return (
-    <section style={{ textAlign: 'center', padding: '2rem' }}>
+    <section className="champion-panel" style={{ textAlign: 'center', padding: '2rem' }}>
       <h1>Champ</h1>
       <iframe
         src={`https://www.youtube.com/embed/${video.video_id}?rel=0`}
@@ -26,8 +26,8 @@ export default function ChampionCard({ video, torneioId }: ChampionCardProps) {
           marginTop: '1rem',
           padding: '0.75rem 1.25rem',
           border: 'none',
-          borderRadius: '8px',
-          background: '#18202a',
+          borderRadius: '999px',
+          background: '#6d3bb5',
           color: '#fff',
           cursor: 'pointer',
         }}

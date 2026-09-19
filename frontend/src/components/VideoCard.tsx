@@ -34,14 +34,14 @@ export default function VideoCard({ video, onClick, accent = 'red', label }: Vid
       style={{
         padding: '1rem',
         background: colors[accent],
-        borderRadius: '16px',
+        borderRadius: '24px',
         border: '3px solid transparent',
         cursor: 'pointer',
         width: '360px',
         maxWidth: '90vw',
-        color: '#111',
+        color: '#f7f2ff',
         textAlign: 'left',
-        boxShadow: '0 8px 18px rgba(0, 0, 0, 0.12)',
+        boxShadow: '0 14px 34px rgba(0, 0, 0, 0.35)',
       }}
     >
       {label && <p style={{ margin: 0, fontWeight: 700, marginBottom: '0.75rem' }}>{label}</p>}

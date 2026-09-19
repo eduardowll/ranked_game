@@ -10,17 +10,17 @@ export default function TournamentCard({ torneio, onClick }: TournamentCardProps
     <button
       type="button"
       onClick={onClick}
+      className="tournament-card purple-panel"
       style={{
         width: 'min(100%, 360px)',
         minHeight: '190px',
         padding: '1.5rem',
         textAlign: 'left',
-        color: '#18202a',
-        background: 'linear-gradient(145deg, #fff7e6, #ffd6a5)',
-        border: '2px solid #f4a261',
-        borderRadius: '16px',
+        color: '#f7f2ff',
+        border: '1px solid #7043a6',
+        borderRadius: '22px',
         cursor: 'pointer',
-        boxShadow: '0 10px 24px rgba(38, 50, 56, 0.12)',
+        boxShadow: '0 14px 34px rgba(0, 0, 0, 0.35)',
       }}
     >
       <span style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase' }}>Torneio</span>
