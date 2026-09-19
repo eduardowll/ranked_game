@@ -30,6 +30,10 @@ class VideoCreate(BaseModel):
     """Quando o usuário cadastra um vídeo novo no banco"""
     url_youtube: str
 
+class VideoUpdate(BaseModel):
+    """Nova URL para uma música já cadastrada."""
+    url_youtube: str
+
 class TournamentCreate(BaseModel):
     """Dados necessários para criar um torneio com todo o catálogo atual"""
     titulo: str

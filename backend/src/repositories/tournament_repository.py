@@ -65,6 +65,28 @@ class TournamentRepository:
                 'estatisticas_videos': statistics,
             })
 
+    def replace_video_in_open_tournaments(self, old_video_id: str, new_video_id: str):
+        """Troca o ID de uma música nos torneios abertos e preserva suas estatísticas."""
+        tournaments = self.get_all_tournaments()
+        for tournament in tournaments:
+            if old_video_id not in tournament.video_ids:
+                continue
+            if tournament.estado == 'em_andamento':
+                raise ValueError('Não é possível trocar uma música de um torneio em andamento.')
+
+        for tournament in tournaments:
+            if old_video_id not in tournament.video_ids:
+                continue
+
+            video_ids = [new_video_id if item == old_video_id else item for item in tournament.video_ids]
+            statistics = dict(tournament.estatisticas_videos or {})
+            if old_video_id in statistics:
+                statistics[new_video_id] = statistics.pop(old_video_id)
+            self.collection.document(tournament.id).update({
+                'video_ids': list(dict.fromkeys(video_ids)),
+                'estatisticas_videos': statistics,
+            })
+
     def start_tournament(self, tournament_id: str):
         """Cria ou recupera a partida persistida do torneio."""
         transaction = db.transaction()

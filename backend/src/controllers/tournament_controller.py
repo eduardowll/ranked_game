@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from src.auth import get_current_user
 from fastapi import Depends
 from src.services.tournament_service import TournamentService
-from src.models.tournament import VideoCreate, TournamentCreate, MatchupResult
+from src.models.tournament import VideoCreate, VideoUpdate, TournamentCreate, MatchupResult
 
 # Cria o roteador para este módulo
 router = APIRouter(tags=["Torneios"])
@@ -32,6 +32,13 @@ def cadastrar_video(dados: VideoCreate, usuario: dict = Depends(get_current_user
 @router.get("/videos")
 def listar_videos():
     return service.video_repo.get_all_videos()
+
+@router.put("/videos/{video_id}")
+def atualizar_video(video_id: str, dados: VideoUpdate, usuario: dict = Depends(get_current_user)):
+    try:
+        return service.update_video(video_id, dados.url_youtube)
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e))
 
 @router.delete("/videos/{video_id}", status_code=204)
 def excluir_video(video_id: str, usuario: dict = Depends(get_current_user)):

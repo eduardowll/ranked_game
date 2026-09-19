@@ -112,6 +112,29 @@ class TournamentService:
         self.tournament_repo.add_video_to_all_tournaments(video.video_id)
         return video
 
+    def update_video(self, old_video_id: str, raw_value: str) -> VideoItem:
+        """Troca a URL de uma música e atualiza seu título pelo resultado do YouTube."""
+        current_video = self.video_repo.get_video(old_video_id)
+        if not current_video:
+            raise ValueError('Música não encontrada.')
+
+        new_video_id = self.normalize_video_id(raw_value)
+        existing_video = self.video_repo.get_video(new_video_id)
+        if existing_video and new_video_id != old_video_id:
+            raise ValueError('A nova música já está cadastrada no catálogo.')
+
+        new_url = raw_value.strip()
+        if 'youtube.com' not in new_url and 'youtu.be' not in new_url:
+            new_url = f'https://www.youtube.com/watch?v={new_video_id}'
+        new_title = self.get_youtube_title_from_url(new_url)
+        if not new_title:
+            raise ValueError('Não foi possível obter o título da nova URL.')
+
+        updated_video = VideoItem(video_id=new_video_id, url=new_url, nome=new_title)
+        self.tournament_repo.replace_video_in_open_tournaments(old_video_id, new_video_id)
+        self.video_repo.replace_video(old_video_id, updated_video)
+        return updated_video
+
     def delete_video_from_catalog(self, video_id: str):
         for tournament in self.tournament_repo.get_all_tournaments():
             if video_id in tournament.video_ids:

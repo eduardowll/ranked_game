@@ -95,6 +95,16 @@ export const api = {
     return parseResponse<VideoItem>(resposta);
   },
 
+  atualizarVideo: async (videoId: string, urlYoutube: string): Promise<VideoItem> => {
+    const headers = await authHeaders();
+    const resposta = await fetch(`${BASE_URL}/videos/${videoId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...headers },
+      body: JSON.stringify({ url_youtube: urlYoutube }),
+    });
+    return parseResponse<VideoItem>(resposta);
+  },
+
   excluirVideo: async (videoId: string): Promise<void> => {
     const headers = await authHeaders();
     const resposta = await fetch(`${BASE_URL}/videos/${videoId}`, { method: 'DELETE', headers });

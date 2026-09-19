@@ -25,3 +25,10 @@ class VideoRepository:
 
     def delete_video(self, video_id: str):
         self.collection.document(video_id).delete()
+
+    def replace_video(self, old_video_id: str, video: VideoItem):
+        batch = db.batch()
+        if old_video_id != video.video_id:
+            batch.delete(self.collection.document(old_video_id))
+        batch.set(self.collection.document(video.video_id), video.model_dump())
+        batch.commit()
