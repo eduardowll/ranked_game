@@ -23,6 +23,9 @@ class TournamentRepository:
         doc_ref.update({'estatisticas_videos': statistics})
         return self.get_tournament(tournament_id)
 
+    def delete_tournament(self, tournament_id: str):
+        self.collection.document(tournament_id).delete()
+
     def get_tournament(self, tournament_id: str) -> TournamentTheme:
         """Busca os detalhes de um torneio específico pelo ID"""
         doc = self.collection.document(tournament_id).get()

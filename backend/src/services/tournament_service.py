@@ -120,6 +120,14 @@ class TournamentService:
             raise ValueError('Música não encontrada.')
         self.video_repo.delete_video(video_id)
 
+    def delete_tournament(self, tournament_id: str, owner_uid: str):
+        tournament = self.tournament_repo.get_tournament(tournament_id)
+        if not tournament:
+            raise ValueError('Torneio não encontrado.')
+        if tournament.owner_uid != owner_uid:
+            raise PermissionError('Somente o proprietário pode excluir este torneio.')
+        self.tournament_repo.delete_tournament(tournament_id)
+
     def get_shuffled_videos_for_tournament(self, tournament_id: str) -> List[VideoItem]:
         """
         Busca todos os vídeos do torneio e devolve uma lista 100% embaralhada.

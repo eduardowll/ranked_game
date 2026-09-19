@@ -43,6 +43,18 @@ export default function Tournaments() {
     }
   };
 
+  const excluirTorneio = async (torneio: TournamentItem) => {
+    if (!window.confirm(`Excluir o torneio "${torneio.titulo}"?`)) return;
+
+    try {
+      await api.excluirTorneio(torneio.id);
+      setTorneios((atuais) => atuais.filter((item) => item.id !== torneio.id));
+      setMensagem('Torneio excluído.');
+    } catch (erro) {
+      setMensagem(erro instanceof Error ? erro.message : 'Não foi possível excluir o torneio.');
+    }
+  };
+
   if (carregando) return <h2>Carregando torneios...</h2>;
 
   return (
@@ -92,6 +104,7 @@ export default function Tournaments() {
               key={torneio.id}
               torneio={torneio}
               onClick={() => { window.location.href = `/torneios/${torneio.id}`; }}
+              onDelete={user?.uid === torneio.owner_uid ? () => excluirTorneio(torneio) : undefined}
             />
           ))}
         </div>

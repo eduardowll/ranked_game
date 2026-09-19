@@ -44,6 +44,15 @@ def excluir_video(video_id: str, usuario: dict = Depends(get_current_user)):
 def listar_torneios():
     return service.get_all_tournaments()
 
+@router.delete("/torneios/{torneio_id}", status_code=204)
+def excluir_torneio(torneio_id: str, usuario: dict = Depends(get_current_user)):
+    try:
+        service.delete_tournament(torneio_id, usuario['uid'])
+    except PermissionError as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
 @router.get("/torneios/{torneio_id}")
 def detalhes_torneio(torneio_id: str):
     try:

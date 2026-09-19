@@ -29,6 +29,7 @@ export interface TournamentItem {
   video_ids: string[];
   estatisticas_videos?: Record<string, VideoStats>;
   estado: 'aberto' | 'em_andamento';
+  owner_uid?: string;
 }
 
 export interface VideoStats {
@@ -108,6 +109,15 @@ export const api = {
       body: JSON.stringify({ titulo }),
     });
     return parseResponse<{ mensagem: string; id: string }>(resposta);
+  },
+
+  excluirTorneio: async (torneioId: string): Promise<void> => {
+    const headers = await authHeaders();
+    const resposta = await fetch(`${BASE_URL}/torneios/${torneioId}`, {
+      method: 'DELETE',
+      headers,
+    });
+    await parseResponse<null>(resposta);
   },
 
   registrarDuelo: async (torneioId: string, vencedorId: string, perdedorId: string): Promise<PartidaResponse> => {
