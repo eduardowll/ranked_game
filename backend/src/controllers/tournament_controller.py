@@ -1,8 +1,8 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from src.auth import get_current_user
 from fastapi import Depends
 from src.services.tournament_service import TournamentService
-from src.models.tournament import VideoCreate, VideoUpdate, TournamentCreate, MatchupResult
+from src.models.tournament import VideoCreate, VideoUpdate, TournamentCreate, MatchupResult, TournamentFinalResult
 
 # Cria o roteador para este módulo
 router = APIRouter(tags=["Torneios"])
@@ -61,14 +61,18 @@ def excluir_torneio(torneio_id: str, usuario: dict = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail=str(e))
 
 @router.get("/torneios/{torneio_id}")
-def detalhes_torneio(torneio_id: str):
+def detalhes_torneio(
+    torneio_id: str,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+):
     try:
         torneio = service.tournament_repo.get_tournament(torneio_id)
         if not torneio:
             raise ValueError("Torneio não encontrado.")
         return {
             "torneio": torneio,
-            "ranking": service.get_tournament_ranking(torneio_id),
+            "ranking": service.get_tournament_ranking(torneio_id, page, page_size),
         }
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -89,5 +93,17 @@ def registrar_duelo(resultado: MatchupResult):
             perdedor_id=resultado.perdedor_id
         )
         return resposta
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/torneios/resultado")
+def salvar_resultado_torneio(resultado: TournamentFinalResult):
+    try:
+        service.save_tournament_result(
+            tournament_id=resultado.torneio_id,
+            champion_id=resultado.campeao_id,
+            statistics=resultado.estatisticas,
+        )
+        return {"mensagem": "Resultado do torneio salvo."}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

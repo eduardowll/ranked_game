@@ -10,16 +10,22 @@ interface TournamentDetailsProps {
 export default function TournamentDetails({ torneioId }: TournamentDetailsProps) {
   const [dados, setDados] = useState<TournamentDetailsResponse | null>(null);
   const [carregando, setCarregando] = useState(true);
+  const [pagina, setPagina] = useState(1);
+  const itensPorPagina = 20;
 
   useEffect(() => {
-    api.detalhesTorneio(torneioId)
+    api.detalhesTorneio(torneioId, pagina, itensPorPagina)
       .then(setDados)
       .catch((erro) => console.error('Erro ao carregar detalhes:', erro))
       .finally(() => setCarregando(false));
-  }, [torneioId]);
+  }, [torneioId, pagina]);
 
-  if (carregando) return <h2>Carregando torneio...</h2>;
+  const carregandoPagina = carregando || (dados !== null && dados.ranking.page !== pagina);
+
+  if (carregandoPagina) return <h2>Carregando torneio...</h2>;
   if (!dados) return <h2>Torneio não encontrado.</h2>;
+
+  const totalPaginas = Math.max(1, Math.ceil(dados.ranking.total / itensPorPagina));
 
   return (
     <section style={{ maxWidth: 1000, margin: '0 auto', padding: '2rem' }}>
@@ -35,10 +41,21 @@ export default function TournamentDetails({ torneioId }: TournamentDetailsProps)
 
       <h2>Ranking</h2>
       <div style={{ display: 'grid', gap: '0.75rem' }}>
-        {dados.ranking.map((video, indice) => (
-          <RankingCard key={video.video_id} video={video} position={indice + 1} />
+        {dados.ranking.items.map((video, indice) => (
+          <RankingCard key={video.video_id} video={video} position={(pagina - 1) * itensPorPagina + indice + 1} />
         ))}
       </div>
+      {totalPaginas > 1 && (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginTop: '1.5rem' }}>
+          <button type="button" disabled={pagina === 1} onClick={() => setPagina((atual) => atual - 1)}>
+            Anterior
+          </button>
+          <span>Página {pagina} de {totalPaginas}</span>
+          <button type="button" disabled={pagina === totalPaginas} onClick={() => setPagina((atual) => atual + 1)}>
+            Próxima
+          </button>
+        </div>
+      )}
     </section>
   );
 }

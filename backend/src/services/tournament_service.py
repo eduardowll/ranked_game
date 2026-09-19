@@ -177,9 +177,20 @@ class TournamentService:
         return videos_para_duelar
 
     def start_tournament(self, tournament_id: str):
-        tema = self.tournament_repo.start_tournament(tournament_id)
+        tema = self.tournament_repo.get_tournament(tournament_id)
         if not tema:
             raise ValueError('Torneio não encontrado.')
+
+        video_ids = list(tema.video_ids)
+        random.shuffle(video_ids)
+        partida = {
+            'fila_ids': video_ids,
+            'vencedores_ids': [],
+            'rodada': 1,
+            'duelo_atual': 1,
+            'duelos_na_rodada': (len(video_ids) + 1) // 2,
+        }
+        tema.partida = partida
         return self._build_match_response(tema)
 
     def _build_match_response(self, tema: TournamentTheme):
@@ -199,18 +210,29 @@ class TournamentService:
     def get_all_tournaments(self) -> List[TournamentTheme]:
         return self.tournament_repo.get_all_tournaments()
 
-    def get_tournament_ranking(self, tournament_id: str):
+    def get_tournament_ranking(self, tournament_id: str, page: int = 1, page_size: int = 20):
         tema = self.tournament_repo.get_tournament(tournament_id)
         if not tema:
             raise ValueError("Torneio não encontrado.")
 
+        statistics = tema.estatisticas_videos or {}
+        ordered_ids = sorted(
+            tema.video_ids,
+            key=lambda video_id: (
+                statistics.get(video_id, {}).get('torneios_vencidos', 0),
+                statistics.get(video_id, {}).get('duelos_vencidos', 0),
+            ),
+            reverse=True,
+        )
+        total = len(ordered_ids)
+        start = (page - 1) * page_size
         ranking = []
-        for video_id in tema.video_ids:
+        for video_id in ordered_ids[start:start + page_size]:
             video = self.video_repo.get_video(self.normalize_video_id(video_id))
             if not video:
                 continue
 
-            stats = tema.estatisticas_videos.get(video.video_id, {})
+            stats = statistics.get(video.video_id, {})
             duelos = stats.get('duelos_jogados', 0)
             duelos_vencidos = stats.get('duelos_vencidos', 0)
             porcentagem_vitoria = (duelos_vencidos / duelos * 100) if duelos else 0
@@ -224,15 +246,43 @@ class TournamentService:
                 "porcentagem_vitoria": round(porcentagem_vitoria, 1),
             })
 
-        return sorted(
-            ranking,
-            key=lambda item: (item["torneios_vencidos"], item["porcentagem_vitoria"]),
-            reverse=True,
-        )
+        return {
+            'items': ranking,
+            'total': total,
+            'page': page,
+            'page_size': page_size,
+        }
 
     def register_match_winner(self, tournament_id: str, vencedor_id: str, perdedor_id: str):
         tema = self.tournament_repo.register_match(tournament_id, vencedor_id, perdedor_id)
         return self._build_match_response(tema)
+
+    def save_tournament_result(self, tournament_id: str, champion_id: str, statistics: dict):
+        tema = self.tournament_repo.get_tournament(tournament_id)
+        if not tema:
+            raise ValueError('Torneio não encontrado.')
+        if champion_id not in tema.video_ids:
+            raise ValueError('Campeão não pertence a este torneio.')
+
+        current_statistics = dict(tema.estatisticas_videos or {})
+        for video_id, result in statistics.items():
+            if video_id not in tema.video_ids:
+                raise ValueError('Estatística contém vídeo fora do torneio.')
+            previous = current_statistics.setdefault(video_id, {
+                'duelos_jogados': 0,
+                'duelos_vencidos': 0,
+                'torneios_vencidos': 0,
+            })
+            previous['duelos_jogados'] += int(result.get('duelos_jogados', 0))
+            previous['duelos_vencidos'] += int(result.get('duelos_vencidos', 0))
+
+        champion_statistics = current_statistics.setdefault(champion_id, {
+            'duelos_jogados': 0,
+            'duelos_vencidos': 0,
+            'torneios_vencidos': 0,
+        })
+        champion_statistics['torneios_vencidos'] += 1
+        self.tournament_repo.complete_local_tournament(tournament_id, current_statistics)
 
     def finish_tournament(self, tournament_id: str, campeao_id: str):
         raise ValueError('A finalização é feita automaticamente ao registrar o último duelo.')

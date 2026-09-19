@@ -3,9 +3,10 @@ import type { VideoItem } from '../services/api';
 interface ChampionCardProps {
   video: VideoItem;
   torneioId: string;
+  mensagem?: string;
 }
 
-export default function ChampionCard({ video, torneioId }: ChampionCardProps) {
+export default function ChampionCard({ video, torneioId, mensagem }: ChampionCardProps) {
   const titulo = video.nome || video.video_id;
 
   return (
@@ -19,6 +20,7 @@ export default function ChampionCard({ video, torneioId }: ChampionCardProps) {
         style={{ width: 560, maxWidth: '90vw', aspectRatio: '16 / 9', border: 0, borderRadius: 12, marginBottom: '1rem' }}
       />
       <h2>{titulo}</h2>
+      {mensagem && <p role="status">{mensagem}</p>}
       <button
         type="button"
         onClick={() => { window.location.href = `/torneios/${torneioId}`; }}

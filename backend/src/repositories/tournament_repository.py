@@ -23,6 +23,15 @@ class TournamentRepository:
         doc_ref.update({'estatisticas_videos': statistics})
         return self.get_tournament(tournament_id)
 
+    def complete_local_tournament(self, tournament_id: str, statistics: dict):
+        doc_ref = self.collection.document(tournament_id)
+        doc_ref.update({
+            'estatisticas_videos': statistics,
+            'estado': 'aberto',
+            'partida': None,
+        })
+        return self.get_tournament(tournament_id)
+
     def delete_tournament(self, tournament_id: str):
         self.collection.document(tournament_id).delete()
 

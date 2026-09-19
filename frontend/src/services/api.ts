@@ -51,6 +51,11 @@ export interface PartidaResponse {
   };
 }
 
+export interface MatchStats {
+  duelos_jogados: number;
+  duelos_vencidos: number;
+}
+
 export interface VideoRankingItem extends VideoItem {
   torneios_vencidos: number;
   duelos_jogados: number;
@@ -60,7 +65,12 @@ export interface VideoRankingItem extends VideoItem {
 
 export interface TournamentDetailsResponse {
   torneio: TournamentItem;
-  ranking: VideoRankingItem[];
+  ranking: {
+    items: VideoRankingItem[];
+    total: number;
+    page: number;
+    page_size: number;
+  };
 }
 
 // 2. Objeto da API tipado
@@ -70,8 +80,8 @@ export const api = {
     return parseResponse<TournamentItem[]>(resposta);
   },
 
-  detalhesTorneio: async (torneioId: string): Promise<TournamentDetailsResponse> => {
-    const resposta = await fetch(`${BASE_URL}/torneios/${torneioId}`);
+  detalhesTorneio: async (torneioId: string, page = 1, pageSize = 20): Promise<TournamentDetailsResponse> => {
+    const resposta = await fetch(`${BASE_URL}/torneios/${torneioId}?page=${page}&page_size=${pageSize}`);
     return parseResponse<TournamentDetailsResponse>(resposta);
   },
   
@@ -141,6 +151,15 @@ export const api = {
       }),
     });
     return parseResponse<PartidaResponse>(resposta);
+  },
+
+  salvarResultadoTorneio: async (torneioId: string, campeaoId: string, estatisticas: Record<string, MatchStats>): Promise<void> => {
+    const resposta = await fetch(`${BASE_URL}/torneios/resultado`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ torneio_id: torneioId, campeao_id: campeaoId, estatisticas }),
+    });
+    await parseResponse<{ mensagem: string }>(resposta);
   },
 
 };
