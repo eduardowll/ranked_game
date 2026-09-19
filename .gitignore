@@ -2,5 +2,6 @@
 /node_modules
 /package-lock.json
 *.json
+!frontend/vercel.json
 __pycache__/
 *.py[cod]

@@ -66,14 +66,12 @@ export interface TournamentDetailsResponse {
 export const api = {
   listarTorneios: async (): Promise<TournamentItem[]> => {
     const resposta = await fetch(`${BASE_URL}/torneios`);
-    if (!resposta.ok) throw new Error("Erro ao carregar torneios");
-    return await resposta.json();
+    return parseResponse<TournamentItem[]>(resposta);
   },
 
   detalhesTorneio: async (torneioId: string): Promise<TournamentDetailsResponse> => {
     const resposta = await fetch(`${BASE_URL}/torneios/${torneioId}`);
-    if (!resposta.ok) throw new Error("Erro ao carregar torneio");
-    return await resposta.json();
+    return parseResponse<TournamentDetailsResponse>(resposta);
   },
   
   iniciarPartida: async (torneioId: string): Promise<PartidaResponse> => {
