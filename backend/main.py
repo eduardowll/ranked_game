@@ -5,6 +5,11 @@ from src.controllers import tournament_controller
 # 1. Inicializa o servidor
 app = FastAPI(title="THIS & THAT API", version="1.0")
 
+origens_permitidas = [
+    "http://localhost:5173",       
+    "https://ranked-game-vert.vercel.app/"  
+]
+
 # 2. Configuração de Segurança (CORS)
 app.add_middleware(
     CORSMiddleware,
