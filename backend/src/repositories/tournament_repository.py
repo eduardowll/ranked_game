@@ -87,6 +87,24 @@ class TournamentRepository:
                 'estatisticas_videos': statistics,
             })
 
+    def remove_video_from_tournaments(self, video_id: str):
+        """Remove uma música dos torneios que não estão em andamento."""
+        tournaments = self.get_all_tournaments()
+        for tournament in tournaments:
+            if video_id in tournament.video_ids and tournament.estado == 'em_andamento':
+                raise ValueError('Não é possível remover uma música de um torneio em andamento.')
+
+        for tournament in tournaments:
+            if video_id not in tournament.video_ids:
+                continue
+
+            statistics = dict(tournament.estatisticas_videos or {})
+            statistics.pop(video_id, None)
+            self.collection.document(tournament.id).update({
+                'video_ids': [item for item in tournament.video_ids if item != video_id],
+                'estatisticas_videos': statistics,
+            })
+
     def start_tournament(self, tournament_id: str):
         """Cria ou recupera a partida persistida do torneio."""
         transaction = db.transaction()

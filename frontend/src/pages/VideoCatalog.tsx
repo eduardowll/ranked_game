@@ -26,7 +26,7 @@ export default function VideoCatalog() {
       await api.excluirVideo(video.video_id);
       setVideos((atuais) => atuais.filter((item) => item.video_id !== video.video_id));
     } catch (erro) {
-      setMensagem(erro instanceof Error ? erro.message : 'Não foi possível remover a música.');
+      setMensagem(erro instanceof Error ? erro.message : 'Não foi possível remover a música. Talvez ela esteja em uma partida em andamento.');
     }
   };
 

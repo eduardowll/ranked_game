@@ -136,11 +136,9 @@ class TournamentService:
         return updated_video
 
     def delete_video_from_catalog(self, video_id: str):
-        for tournament in self.tournament_repo.get_all_tournaments():
-            if video_id in tournament.video_ids:
-                raise ValueError('Não é possível remover uma música usada por um torneio.')
         if not self.video_repo.get_video(video_id):
             raise ValueError('Música não encontrada.')
+        self.tournament_repo.remove_video_from_tournaments(video_id)
         self.video_repo.delete_video(video_id)
 
     def delete_tournament(self, tournament_id: str, owner_uid: str):
