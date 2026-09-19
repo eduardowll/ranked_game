@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 
 # ---------------------------------------------------------
@@ -11,17 +11,13 @@ class VideoItem(BaseModel):
     url: str                  
     nome: str                 
     
-    duelos_jogados: int = 0 
-    duelos_vencidos: int = 0
-    torneios_vencidos: int = 0 
-    
 class TournamentTheme(BaseModel):
     """Representa a categoria/tema do torneio"""
     id: Optional[str] = None
     titulo: str
     descricao: Optional[str] = None
     video_ids: List[str]      
-    vezes_jogado: int = 0
+    estatisticas_videos: dict = Field(default_factory=dict)
 
 # ---------------------------------------------------------
 # 2. SCHEMAS DE REQUISIÇÃO
@@ -30,15 +26,14 @@ class TournamentTheme(BaseModel):
 class VideoCreate(BaseModel):
     """Quando o usuário cadastra um vídeo novo no banco"""
     url_youtube: str
-    nome: str
 
 class TournamentCreate(BaseModel):
-    """Dados necessários para criar um torneio"""
+    """Dados necessários para criar um torneio com todo o catálogo atual"""
     titulo: str
-    urls_youtube: List[str]
 
 class MatchupResult(BaseModel):
     """Quando um 1v1 acontece na tela, o Frontend avisa quem ganhou e quem perdeu"""
+    torneio_id: str
     vencedor_id: str
     perdedor_id: str
 

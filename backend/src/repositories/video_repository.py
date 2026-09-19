@@ -1,4 +1,3 @@
-from google.cloud.firestore import Increment
 from src.database import db
 from src.models.tournament import VideoItem
 
@@ -23,22 +22,3 @@ class VideoRepository:
         """Busca todos os vídeos cadastrados para o ranking global"""
         docs = self.collection.stream()
         return [VideoItem(**doc.to_dict()) for doc in docs]
-
-    def register_match_result(self, vencedor_id: str, perdedor_id: str):
-        """Atualiza os status de vitória e derrota de uma só vez (Batch)"""
-        batch = db.batch()
-        
-        vencedor_ref = self.collection.document(vencedor_id)
-        perdedor_ref = self.collection.document(perdedor_id)
-        
-        batch.update(vencedor_ref, {
-            'duelos_jogados': Increment(1),
-            'duelos_vencidos': Increment(1)
-        })
-        
-        batch.update(perdedor_ref, {
-            'duelos_jogados': Increment(1)
-        })
-        
-        # Executa as duas operações ao mesmo tempo
-        batch.commit()

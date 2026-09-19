@@ -1,0 +1,50 @@
+.video-card {
+	transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.video-card:hover,
+.video-card:focus-visible {
+	transform: translateY(-5px);
+	box-shadow: 0 14px 28px rgba(24, 32, 42, 0.2) !important;
+	outline: none;
+}
+
+.video-card-red:hover,
+.video-card-red:focus-visible {
+	border-color: #d95d5d !important;
+}
+
+.video-card-blue:hover,
+.video-card-blue:focus-visible {
+	border-color: #5d6fd9 !important;
+}
+
+.duel-board {
+	display: flex;
+	justify-content: center;
+	gap: 2rem;
+	margin-top: 2rem;
+	flex-wrap: wrap;
+	animation: duel-enter 240ms ease-out;
+}
+
+.round-progress {
+	display: inline-block;
+	margin: 0.5rem 0;
+	padding: 0.55rem 1rem;
+	border-radius: 999px;
+	background: #18202a;
+	color: #fff;
+	font-weight: 700;
+}
+
+.round-transition {
+	padding: 5rem 2rem;
+	text-align: center;
+	animation: duel-enter 180ms ease-out;
+}
+
+@keyframes duel-enter {
+	from { opacity: 0; transform: translateY(10px); }
+	to { opacity: 1; transform: translateY(0); }
+}

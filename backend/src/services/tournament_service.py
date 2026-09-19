@@ -83,23 +83,33 @@ class TournamentService:
         )
         return self.video_repo.save_video(video)
 
-    def create_new_tournament(self, titulo: str, video_ids: List[str]) -> TournamentTheme:
-        """Cria uma nova playlist/torneio no banco de dados"""
-        if len(video_ids) < 2:
+    def create_new_tournament(self, titulo: str) -> TournamentTheme:
+        """Cria um torneio usando todo o catálogo global de músicas."""
+        videos = self.video_repo.get_all_videos()
+        if len(videos) < 2:
             raise ValueError("O torneio precisa de pelo menos 2 vídeos para acontecer.")
 
-        ids_normalizados = []
-        for valor in video_ids:
-            video_id = self.normalize_video_id(valor)
-            if video_id not in ids_normalizados:
-                ids_normalizados.append(video_id)
-                self.ensure_video_exists(valor)
+        ids_normalizados = [video.video_id for video in videos]
 
         novo_tema = TournamentTheme(
             titulo=titulo,
-            video_ids=ids_normalizados
+            video_ids=ids_normalizados,
+            estatisticas_videos={
+                video_id: {
+                    'duelos_jogados': 0,
+                    'duelos_vencidos': 0,
+                    'torneios_vencidos': 0,
+                }
+                for video_id in ids_normalizados
+            },
         )
         return self.tournament_repo.create_tournament(novo_tema)
+
+    def add_video_to_catalog(self, raw_value: str) -> VideoItem:
+        """Cadastra uma música global e sincroniza todos os torneios."""
+        video = self.ensure_video_exists(raw_value)
+        self.tournament_repo.add_video_to_all_tournaments(video.video_id)
+        return video
 
     def get_shuffled_videos_for_tournament(self, tournament_id: str) -> List[VideoItem]:
         """
@@ -128,14 +138,69 @@ class TournamentService:
 
         return videos_para_duelar
 
-    def register_match_winner(self, vencedor_id: str, perdedor_id: str):
-        """Avisa o banco que um duelo 1v1 acabou para atualizar a Taxa de Vitória (Win Rate)"""
-        self.video_repo.register_match_result(vencedor_id, perdedor_id)
+    def get_all_tournaments(self) -> List[TournamentTheme]:
+        return self.tournament_repo.get_all_tournaments()
+
+    def get_tournament_ranking(self, tournament_id: str):
+        tema = self.tournament_repo.get_tournament(tournament_id)
+        if not tema:
+            raise ValueError("Torneio não encontrado.")
+
+        ranking = []
+        for video_id in tema.video_ids:
+            video = self.video_repo.get_video(self.normalize_video_id(video_id))
+            if not video:
+                continue
+
+            stats = tema.estatisticas_videos.get(video.video_id, {})
+            duelos = stats.get('duelos_jogados', 0)
+            duelos_vencidos = stats.get('duelos_vencidos', 0)
+            porcentagem_vitoria = (duelos_vencidos / duelos * 100) if duelos else 0
+            ranking.append({
+                "video_id": video.video_id,
+                "nome": video.nome,
+                "url": video.url,
+                "torneios_vencidos": stats.get('torneios_vencidos', 0),
+                "duelos_jogados": duelos,
+                "duelos_vencidos": duelos_vencidos,
+                "porcentagem_vitoria": round(porcentagem_vitoria, 1),
+            })
+
+        return sorted(
+            ranking,
+            key=lambda item: (item["torneios_vencidos"], item["porcentagem_vitoria"]),
+            reverse=True,
+        )
+
+    def register_match_winner(self, tournament_id: str, vencedor_id: str, perdedor_id: str):
+        """Atualiza estatísticas somente dentro do torneio atual."""
+        tema = self.tournament_repo.get_tournament(tournament_id)
+        if not tema:
+            raise ValueError("Torneio não encontrado.")
+        if vencedor_id not in tema.video_ids or perdedor_id not in tema.video_ids:
+            raise ValueError("Os vídeos não pertencem a este torneio.")
+
+        statistics = tema.estatisticas_videos or {}
+        for video_id in (vencedor_id, perdedor_id):
+            statistics.setdefault(video_id, {
+                'duelos_jogados': 0,
+                'duelos_vencidos': 0,
+                'torneios_vencidos': 0,
+            })
+            statistics[video_id]['duelos_jogados'] += 1
+        statistics[vencedor_id]['duelos_vencidos'] += 1
+        self.tournament_repo.update_video_statistics(tournament_id, statistics)
 
     def finish_tournament(self, tournament_id: str, campeao_id: str):
         """Finaliza o torneio, somando +1 nas estatísticas da playlist e do vídeo campeão"""
-        self.tournament_repo.increment_play_count(tournament_id)
-        
-        campeao_ref = self.video_repo.collection.document(campeao_id)
-        from google.cloud.firestore import Increment
-        campeao_ref.update({'torneios_vencidos': Increment(1)})
+        tema = self.tournament_repo.get_tournament(tournament_id)
+        if not tema or campeao_id not in tema.video_ids:
+            raise ValueError("Campeão não pertence a este torneio.")
+        statistics = tema.estatisticas_videos or {}
+        statistics.setdefault(campeao_id, {
+            'duelos_jogados': 0,
+            'duelos_vencidos': 0,
+            'torneios_vencidos': 0,
+        })
+        statistics[campeao_id]['torneios_vencidos'] += 1
+        self.tournament_repo.update_video_statistics(tournament_id, statistics)
