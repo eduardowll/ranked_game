@@ -13,6 +13,15 @@ interface ArenaSnapshot {
   estatisticas: Record<string, MatchStats>;
 }
 
+const embaralharArray = (array: VideoItem[]) => {
+  const novoArray = [...array];
+  for (let i = novoArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [novoArray[i], novoArray[j]] = [novoArray[j], novoArray[i]];
+  }
+  return novoArray;
+};
+
 export default function Arena() {
   const [fila, setFila] = useState<VideoItem[]>([]);
   const [vencedoresRodada, setVencedoresRodada] = useState<VideoItem[]>([]);
@@ -100,7 +109,7 @@ export default function Arena() {
       });
   }, [estatisticas, fila, torneioId]);
 
-  const escolherVencedor = (vencedor: VideoItem, perdedor: VideoItem) => {
+const escolherVencedor = (vencedor: VideoItem, perdedor: VideoItem) => {
     setEstatisticas((atuais) => ({
       ...atuais,
       [vencedor.video_id]: {
@@ -122,19 +131,24 @@ export default function Arena() {
         return;
       }
 
-      setFila(vencedores);
+      const proximaRodadaEmbaralhada = embaralharArray(vencedores);
+      
+      setFila(proximaRodadaEmbaralhada);
       setVencedoresRodada([]);
       setDueloAtual(1);
-      setDuelosNaRodada(Math.ceil(vencedores.length / 2));
+      setDuelosNaRodada(Math.ceil(proximaRodadaEmbaralhada.length / 2));
       return;
     }
 
     if (restantes.length === 1) {
       const proximaRodada = [...vencedores, restantes[0]];
-      setFila(proximaRodada);
+      
+      const proximaRodadaEmbaralhada = embaralharArray(proximaRodada);
+      
+      setFila(proximaRodadaEmbaralhada);
       setVencedoresRodada([]);
       setDueloAtual(1);
-      setDuelosNaRodada(Math.ceil(proximaRodada.length / 2));
+      setDuelosNaRodada(Math.ceil(proximaRodadaEmbaralhada.length / 2));
       return;
     }
 
