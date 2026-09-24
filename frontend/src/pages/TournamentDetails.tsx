@@ -11,6 +11,7 @@ export default function TournamentDetails({ torneioId }: TournamentDetailsProps)
   const [dados, setDados] = useState<TournamentDetailsResponse | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [pagina, setPagina] = useState(1);
+  const [tamanhoChave, setTamanhoChave] = useState('64');
   const itensPorPagina = 20;
 
   useEffect(() => {
@@ -22,7 +23,7 @@ export default function TournamentDetails({ torneioId }: TournamentDetailsProps)
 
   const carregandoPagina = carregando || (dados !== null && dados.ranking.page !== pagina);
 
-  if (carregandoPagina) return <h2>Carregando torneio...</h2>;
+  if (carregandoPagina) return <h2>Loading...</h2>;
   if (!dados) return <h2>Torneio não encontrado.</h2>;
 
   const totalPaginas = Math.max(1, Math.ceil(dados.ranking.total / itensPorPagina));
@@ -34,8 +35,24 @@ export default function TournamentDetails({ torneioId }: TournamentDetailsProps)
       <p>Status: {dados.torneio.estado === 'em_andamento' ? 'Em andamento' : 'Jogar'}</p>
 
       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', margin: '1.5rem 0' }}>
-        <button type="button" onClick={() => { window.location.href = `/arena?torneioId=${dados.torneio.id}`; }}>
-          Jogar torneio
+<select 
+          value={tamanhoChave} 
+          onChange={(e) => setTamanhoChave(e.target.value)}
+          style={{ padding: '0.6rem', borderRadius: '8px' }}
+        >
+          <option value="32">32</option>
+          <option value="64">64</option>
+          <option value="128">128</option>
+          <option value="256">256</option>
+          <option value="512">512</option>
+          <option value="max">Max (Todas)</option>
+        </select>
+
+        <button 
+          type="button" 
+          onClick={() => { window.location.href = `/arena?torneioId=${dados.torneio.id}&tamanho=${tamanhoChave}`; }}
+        >
+          Jogar
         </button>
       </div>
 

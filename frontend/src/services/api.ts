@@ -85,10 +85,10 @@ export const api = {
     return parseResponse<TournamentDetailsResponse>(resposta);
   },
   
-  iniciarPartida: async (torneioId: string): Promise<PartidaResponse> => {
-    const resposta = await fetch(`${BASE_URL}/torneios/${torneioId}/jogar`);
-    return parseResponse<PartidaResponse>(resposta);
-  },
+  iniciarPartida: async (torneioId: string, tamanho: string = 'max'): Promise<PartidaResponse> => {
+      const resposta = await fetch(`${BASE_URL}/torneios/${torneioId}/jogar?tamanho=${tamanho}`);
+      return parseResponse<PartidaResponse>(resposta);
+    },
 
   listarVideos: async (): Promise<VideoItem[]> => {
     const resposta = await fetch(`${BASE_URL}/videos`);

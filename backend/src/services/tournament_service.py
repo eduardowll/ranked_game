@@ -176,22 +176,27 @@ class TournamentService:
 
         return videos_para_duelar
 
-    def start_tournament(self, tournament_id: str):
-        tema = self.tournament_repo.get_tournament(tournament_id)
-        if not tema:
-            raise ValueError('Torneio não encontrado.')
+    def start_tournament(self, tournament_id: str, tamanho: str = "max"):
+            tema = self.tournament_repo.get_tournament(tournament_id)
+            if not tema:
+                raise ValueError('Torneio não encontrado.')
 
-        video_ids = list(tema.video_ids)
-        random.shuffle(video_ids)
-        partida = {
-            'fila_ids': video_ids,
-            'vencedores_ids': [],
-            'rodada': 1,
-            'duelo_atual': 1,
-            'duelos_na_rodada': (len(video_ids) + 1) // 2,
-        }
-        tema.partida = partida
-        return self._build_match_response(tema)
+            video_ids = list(tema.video_ids)
+            random.shuffle(video_ids) 
+            
+            if tamanho != "max" and tamanho.isdigit():
+                limite = int(tamanho)
+                video_ids = video_ids[:limite]
+
+            partida = {
+                'fila_ids': video_ids,
+                'vencedores_ids': [],
+                'rodada': 1,
+                'duelo_atual': 1,
+                'duelos_na_rodada': (len(video_ids) + 1) // 2,
+            }
+            tema.partida = partida
+            return self._build_match_response(tema)
 
     def _build_match_response(self, tema: TournamentTheme):
         partida = tema.partida or {}

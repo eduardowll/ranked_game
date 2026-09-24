@@ -78,9 +78,9 @@ def detalhes_torneio(
         raise HTTPException(status_code=404, detail=str(e))
 
 @router.get("/torneios/{torneio_id}/jogar")
-def iniciar_partida(torneio_id: str):
+def iniciar_partida(torneio_id: str, tamanho: str = Query("max")):
     try:
-        return service.start_tournament(torneio_id)
+        return service.start_tournament(torneio_id, tamanho)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 

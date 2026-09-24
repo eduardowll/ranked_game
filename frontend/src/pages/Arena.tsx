@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ChampionCard from '../components/ChampionCard';
 import VideoCard from '../components/VideoCard';
+import RandomButton from '../components/RandomButton';
 import { api } from '../services/api';
 import type { MatchStats, VideoItem } from '../services/api';
 
@@ -35,6 +36,7 @@ export default function Arena() {
 
   const [searchParams] = useSearchParams();
   const torneioId = searchParams.get('torneioId');
+  const tamanhoDaChave = searchParams.get('tamanho') || 'max';
 
   useEffect(() => {
     if (!torneioId) {
@@ -63,7 +65,7 @@ export default function Arena() {
           }
         }
 
-        const dados = await api.iniciarPartida(idDoTorneio);
+        const dados = await api.iniciarPartida(idDoTorneio, tamanhoDaChave);
         setFila(dados.videos);
         setDueloAtual(dados.partida.duelo_atual);
         setDuelosNaRodada(dados.partida.duelos_na_rodada);
@@ -158,7 +160,7 @@ const escolherVencedor = (vencedor: VideoItem, perdedor: VideoItem) => {
   };
 
   if (!torneioId) return <h2>Nenhum torneio foi selecionado.</h2>;
-  if (carregando) return <h2>Carregando a arena... ⚔️</h2>;
+  if (carregando) return <h2>Loading...</h2>;
   if (fila.length === 0) return <h2>Nenhum vídeo encontrado.</h2>;
 
   if (fila.length === 1) {
@@ -168,12 +170,22 @@ const escolherVencedor = (vencedor: VideoItem, perdedor: VideoItem) => {
   const video1 = fila[0];
   const video2 = fila[1];
 
+  const escolherAleatorio = () => {
+    if (Math.random() < 0.5) {
+      escolherVencedor(video1, video2);
+    } else {
+      escolherVencedor(video2, video1);
+    }
+  };
+
   return (
     <div style={{ textAlign: 'center', padding: '2rem' }}>
       <h1>THIS OR THAT</h1>
       <p className="round-progress" aria-live="polite">Rodada {dueloAtual} de {duelosNaRodada}</p>
       {mensagem && <p>{mensagem}</p>}
 
+      <RandomButton onClick={escolherAleatorio} />
+      
       <div className="duel-board" key={`${video1.video_id}-${video2.video_id}`}>
         <VideoCard
           video={video1}
