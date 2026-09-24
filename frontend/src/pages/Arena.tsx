@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import ChampionCard from '../components/ChampionCard';
 import VideoCard from '../components/VideoCard';
 import RandomButton from '../components/RandomButton';
+import CancelButton from '../components/CancelButton';
 import { api } from '../services/api';
 import type { MatchStats, VideoItem } from '../services/api';
 
@@ -178,6 +179,13 @@ const escolherVencedor = (vencedor: VideoItem, perdedor: VideoItem) => {
     }
   };
 
+  const interromperPartida = () => {
+    if (window.confirm("Deseja realmente sair? O progresso desta partida será apagado.")) {
+      window.localStorage.removeItem(`this-that:arena:${torneioId}`);
+      window.location.href = `/torneios/${torneioId}`;
+    }
+  };
+
   return (
     <div style={{ textAlign: 'center', padding: '2rem' }}>
       <h1>THIS OR THAT</h1>
@@ -185,7 +193,9 @@ const escolherVencedor = (vencedor: VideoItem, perdedor: VideoItem) => {
       {mensagem && <p>{mensagem}</p>}
 
       <RandomButton onClick={escolherAleatorio} />
-      
+
+      <CancelButton onClick={interromperPartida} />
+
       <div className="duel-board" key={`${video1.video_id}-${video2.video_id}`}>
         <VideoCard
           video={video1}

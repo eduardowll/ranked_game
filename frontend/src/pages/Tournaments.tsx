@@ -55,7 +55,7 @@ export default function Tournaments() {
     }
   };
 
-  if (carregando) return <h2>Carregando torneios...</h2>;
+  if (carregando) return <h2>Loading...</h2>;
 
   return (
     <section style={{ maxWidth: 1200, margin: '0 auto', padding: '2rem' }}>

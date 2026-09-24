@@ -47,7 +47,7 @@ export default function VideoCatalog() {
 
   const filtrados = videos.filter((video) => video.nome.toLowerCase().includes(busca.toLowerCase()));
 
-  if (carregando) return <h2>Carregando músicas...</h2>;
+  if (carregando) return <h2>Loading...</h2>;
 
   return (
     <section style={{ maxWidth: 1100, margin: '0 auto', padding: '2rem' }}>
