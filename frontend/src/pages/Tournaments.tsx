@@ -5,21 +5,65 @@ import { useAuth } from '../contexts/useAuth';
 import { api } from '../services/api';
 import type { TournamentItem } from '../services/api';
 
+const TORNEIOS_CACHE_KEY = 'ranked_game_torneios_cache';
+const TORNEIOS_CACHE_TTL = 5 * 60 * 1000;
+
+function lerTorneiosCache(): TournamentItem[] {
+  try {
+    const cache = window.localStorage.getItem(TORNEIOS_CACHE_KEY);
+    if (!cache) return [];
+
+    const dados = JSON.parse(cache) as TournamentItem[];
+    return Array.isArray(dados) ? dados : [];
+  } catch {
+    return [];
+  }
+}
+
+function cacheAtualizadoRecentemente(): boolean {
+  try {
+    const timestamp = Number(window.localStorage.getItem(`${TORNEIOS_CACHE_KEY}_ts`) ?? '0');
+    if (!timestamp) return false;
+    return Date.now() - timestamp < TORNEIOS_CACHE_TTL;
+  } catch {
+    return false;
+  }
+}
+
 export default function Tournaments() {
   const { user } = useAuth();
-  const [torneios, setTorneios] = useState<TournamentItem[]>([]);
+  const [torneios, setTorneios] = useState<TournamentItem[]>(() => lerTorneiosCache());
   const [mostrarCadastro, setMostrarCadastro] = useState(false);
   const [mostrarCriacao, setMostrarCriacao] = useState(false);
   const [url, setUrl] = useState('');
   const [titulo, setTitulo] = useState('');
   const [mensagem, setMensagem] = useState('');
-  const [carregando, setCarregando] = useState(true);
+  const [carregando, setCarregando] = useState(() => !cacheAtualizadoRecentemente() && lerTorneiosCache().length === 0);
 
   useEffect(() => {
+    const cached = lerTorneiosCache();
+    if (cached.length > 0) {
+      setTorneios(cached);
+      setCarregando(false);
+    }
+
     api.listarTorneios()
-      .then(setTorneios)
-      .catch((erro) => console.error('Erro ao carregar dados:', erro))
-      .finally(() => setCarregando(false));
+      .then((dados) => {
+        setTorneios(dados);
+        window.localStorage.setItem(TORNEIOS_CACHE_KEY, JSON.stringify(dados));
+        window.localStorage.setItem(`${TORNEIOS_CACHE_KEY}_ts`, String(Date.now()));
+      })
+      .catch((erro) => {
+        console.error('Erro ao carregar dados:', erro);
+        if (cached.length === 0) {
+          setMensagem('Não foi possível carregar os torneios agora. Tente novamente.');
+        }
+      })
+      .finally(() => {
+        if (cached.length === 0) {
+          setCarregando(false);
+        }
+      });
   }, []);
 
   const cadastrarMusica = async (event: FormEvent) => {
