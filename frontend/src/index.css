@@ -73,6 +73,13 @@ input::placeholder {
 	box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
 }
 
+.tournament-card .tournament-card__open:hover:not(:disabled),
+.tournament-card .tournament-card__open:focus-visible {
+	transform: none;
+	box-shadow: none;
+	background: transparent;
+}
+
 .video-card {
 	transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
 }
@@ -102,6 +109,54 @@ input::placeholder {
 .video-card-blue:hover,
 .video-card-blue:focus-visible {
 	border-color: #b5afff !important;
+}
+
+.surprise-round-toggle {
+	margin: 0.75rem 0;
+	background: #21172e;
+	border-color: #7653a5;
+}
+
+.surprise-round-toggle.is-active {
+	background: #6d3bb5;
+	box-shadow: 0 0 0 3px rgba(159, 122, 234, 0.2);
+}
+
+.surprise-round-status {
+	color: #d8b4fe;
+	font-size: 0.95rem;
+}
+
+.video-card__cover {
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	border: 1px solid #694b87;
+	border-radius: 12px;
+	background: radial-gradient(ellipse at center, #21182b 0%, #08060d 72%);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.65rem;
+	color: #f7f2ff;
+	font-weight: 700;
+}
+
+.video-card__cover-icon {
+	width: 2.5rem;
+	height: 2.5rem;
+	display: grid;
+	place-items: center;
+	border: 1px solid #9f7aea;
+	border-radius: 50%;
+	color: #d8b4fe;
+	font-size: 1.4rem;
+}
+
+.video-card .video-card__reveal {
+	min-height: 38px;
+	padding: 0.45rem 1rem;
+	font-size: 0.85rem;
 }
 
 .duel-board {

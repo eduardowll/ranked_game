@@ -8,11 +8,14 @@ function getVideoId(video: VideoItem) {
 interface VideoCardProps {
   video: VideoItem;
   onClick: () => void;
+  hidden?: boolean;
+  revealed?: boolean;
+  onReveal?: () => void;
   accent?: 'red' | 'blue';
   label?: string;
 }
 
-export default function VideoCard({ video, onClick, accent = 'red', label }: VideoCardProps) {
+export default function VideoCard({ video, onClick, hidden = false, revealed = false, onReveal, accent = 'red', label }: VideoCardProps) {
   const colors = {
     red: '#ffcccc',
     blue: '#ccccff',
@@ -20,16 +23,19 @@ export default function VideoCard({ video, onClick, accent = 'red', label }: Vid
 
   const titulo = video.nome?.trim() || 'Sem título';
   const videoId = getVideoId(video);
+  const coberto = hidden && !revealed;
 
   return (
     <article
       className={`video-card video-card-${accent}`}
       role="button"
       tabIndex={0}
-      aria-label={`Escolher ${titulo}`}
-      onClick={onClick}
+      aria-label={coberto ? `Revelar ${label ?? 'vídeo'}` : `Escolher ${titulo}`}
+      onClick={() => {
+        if (!coberto) onClick();
+      }}
       onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') onClick();
+        if (!coberto && (event.key === 'Enter' || event.key === ' ')) onClick();
       }}
       style={{
         padding: '1rem',
@@ -45,7 +51,22 @@ export default function VideoCard({ video, onClick, accent = 'red', label }: Vid
       }}
     >
       {label && <p style={{ margin: 0, fontWeight: 700, marginBottom: '0.75rem' }}>{label}</p>}
-      {videoId ? (
+      {coberto ? (
+        <div className="video-card__cover" role="group" aria-label={`${label ?? 'Vídeo'} oculto`}>
+          <span aria-hidden="true" className="video-card__cover-icon">?</span>
+          <span>Vídeo oculto</span>
+          <button
+            type="button"
+            className="video-card__reveal"
+            onClick={(event) => {
+              event.stopPropagation();
+              onReveal?.();
+            }}
+          >
+            Revelar vídeo
+          </button>
+        </div>
+      ) : videoId ? (
         <iframe
           src={`https://www.youtube.com/embed/${videoId}?rel=0`}
           title={titulo}
@@ -58,7 +79,9 @@ export default function VideoCard({ video, onClick, accent = 'red', label }: Vid
           Abrir vídeo no YouTube
         </a>
       )}
-      <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', lineHeight: 1.25 }}>{titulo}</h3>
+      <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', lineHeight: 1.25 }}>
+        {coberto ? 'Título oculto' : titulo}
+      </h3>
     </article>
   );
 }

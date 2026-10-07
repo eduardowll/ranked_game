@@ -13,6 +13,9 @@ interface ArenaSnapshot {
   dueloAtual: number;
   duelosNaRodada: number;
   estatisticas: Record<string, MatchStats>;
+  esconderProximaRodada?: boolean;
+  rodadaSurpresaAtiva?: boolean;
+  videosRevelados?: string[];
 }
 
 const embaralharArray = (array: VideoItem[]) => {
@@ -32,6 +35,9 @@ export default function Arena() {
   const [carregando, setCarregando] = useState(true);
   const [mensagem, setMensagem] = useState('');
   const [estatisticas, setEstatisticas] = useState<Record<string, MatchStats>>({});
+  const [esconderProximaRodada, setEsconderProximaRodada] = useState(false);
+  const [rodadaSurpresaAtiva, setRodadaSurpresaAtiva] = useState(false);
+  const [videosRevelados, setVideosRevelados] = useState<string[]>([]);
   const [inicializada, setInicializada] = useState(false);
   const resultadoSalvo = useRef<string | null>(null);
 
@@ -59,6 +65,9 @@ export default function Arena() {
               setDueloAtual(snapshot.dueloAtual);
               setDuelosNaRodada(snapshot.duelosNaRodada);
               setEstatisticas(snapshot.estatisticas);
+              setEsconderProximaRodada(snapshot.esconderProximaRodada ?? false);
+              setRodadaSurpresaAtiva(snapshot.rodadaSurpresaAtiva ?? false);
+              setVideosRevelados(snapshot.videosRevelados ?? []);
               return;
             }
           } catch {
@@ -83,7 +92,7 @@ export default function Arena() {
     }
 
     prepararArena();
-  }, [torneioId]);
+  }, [torneioId, tamanhoDaChave]);
 
   useEffect(() => {
     if (!torneioId || !inicializada || fila.length === 0) return;
@@ -94,9 +103,12 @@ export default function Arena() {
       dueloAtual,
       duelosNaRodada,
       estatisticas,
+      esconderProximaRodada,
+      rodadaSurpresaAtiva,
+      videosRevelados,
     };
     window.localStorage.setItem(`this-that:arena:${torneioId}`, JSON.stringify(snapshot));
-  }, [dueloAtual, duelosNaRodada, estatisticas, fila, inicializada, torneioId, vencedoresRodada]);
+  }, [dueloAtual, duelosNaRodada, esconderProximaRodada, estatisticas, fila, inicializada, rodadaSurpresaAtiva, torneioId, vencedoresRodada, videosRevelados]);
 
   useEffect(() => {
     if (!torneioId || fila.length !== 1 || resultadoSalvo.current === fila[0].video_id) return;
@@ -140,6 +152,9 @@ const escolherVencedor = (vencedor: VideoItem, perdedor: VideoItem) => {
       setVencedoresRodada([]);
       setDueloAtual(1);
       setDuelosNaRodada(Math.ceil(proximaRodadaEmbaralhada.length / 2));
+      setRodadaSurpresaAtiva(esconderProximaRodada);
+      setEsconderProximaRodada(false);
+      setVideosRevelados([]);
       return;
     }
 
@@ -152,11 +167,15 @@ const escolherVencedor = (vencedor: VideoItem, perdedor: VideoItem) => {
       setVencedoresRodada([]);
       setDueloAtual(1);
       setDuelosNaRodada(Math.ceil(proximaRodadaEmbaralhada.length / 2));
+      setRodadaSurpresaAtiva(esconderProximaRodada);
+      setEsconderProximaRodada(false);
+      setVideosRevelados([]);
       return;
     }
 
     setFila(restantes);
     setVencedoresRodada(vencedores);
+    if (rodadaSurpresaAtiva) setVideosRevelados([]);
     setDueloAtual((atual) => atual + 1);
   };
 
@@ -170,6 +189,8 @@ const escolherVencedor = (vencedor: VideoItem, perdedor: VideoItem) => {
 
   const video1 = fila[0];
   const video2 = fila[1];
+  const duplaRevelada = !rodadaSurpresaAtiva ||
+    (videosRevelados.includes(video1.video_id) && videosRevelados.includes(video2.video_id));
 
   const escolherAleatorio = () => {
     if (Math.random() < 0.5) {
@@ -190,9 +211,18 @@ const escolherVencedor = (vencedor: VideoItem, perdedor: VideoItem) => {
     <div style={{ textAlign: 'center', padding: '2rem' }}>
       <h1>THIS OR THAT</h1>
       <p className="round-progress" aria-live="polite">Rodada {dueloAtual} de {duelosNaRodada}</p>
+      <button
+        type="button"
+        className={esconderProximaRodada ? 'surprise-round-toggle is-active' : 'surprise-round-toggle'}
+        aria-pressed={esconderProximaRodada}
+        onClick={() => setEsconderProximaRodada((atual) => !atual)}
+      >
+        {esconderProximaRodada ? 'Próxima rodada será surpresa ✓' : 'Esconder próxima rodada'}
+      </button>
+      {rodadaSurpresaAtiva && <p className="surprise-round-status">Rodada surpresa: revele os dois vídeos para votar.</p>}
       {mensagem && <p>{mensagem}</p>}
 
-      <RandomButton onClick={escolherAleatorio} />
+      <RandomButton onClick={escolherAleatorio} disabled={!duplaRevelada} />
 
       <CancelButton onClick={interromperPartida} />
 
@@ -201,6 +231,9 @@ const escolherVencedor = (vencedor: VideoItem, perdedor: VideoItem) => {
           video={video1}
           label="Vídeo 1"
           accent="red"
+          hidden={rodadaSurpresaAtiva}
+          revealed={videosRevelados.includes(video1.video_id)}
+          onReveal={() => setVideosRevelados((atuais) => [...atuais, video1.video_id])}
           onClick={() => escolherVencedor(video1, video2)}
         />
 
@@ -208,6 +241,9 @@ const escolherVencedor = (vencedor: VideoItem, perdedor: VideoItem) => {
           video={video2}
           label="Vídeo 2"
           accent="blue"
+          hidden={rodadaSurpresaAtiva}
+          revealed={videosRevelados.includes(video2.video_id)}
+          onReveal={() => setVideosRevelados((atuais) => [...atuais, video2.video_id])}
           onClick={() => escolherVencedor(video2, video1)}
         />
       </div>

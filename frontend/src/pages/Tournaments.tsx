@@ -42,10 +42,6 @@ export default function Tournaments() {
 
   useEffect(() => {
     const cached = lerTorneiosCache();
-    if (cached.length > 0) {
-      setTorneios(cached);
-      setCarregando(false);
-    }
 
     api.listarTorneios()
       .then((dados) => {

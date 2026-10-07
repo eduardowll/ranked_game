@@ -50,6 +50,7 @@ export default function TournamentCard({ torneio, onClick, onDelete }: Tournamen
       <button
         type="button"
         onClick={onClick}
+        className="tournament-card__open"
         style={{ width: '100%', minHeight: 154, padding: onDelete ? '1rem 1rem 1rem 3.5rem' : '1rem', border: 0, borderRadius: '16px', background: 'transparent', color: 'inherit', textAlign: 'left' }}
       >
         <span style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase' }}>Torneio</span>
