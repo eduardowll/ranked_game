@@ -140,36 +140,29 @@ const escolherVencedor = (vencedor: VideoItem, perdedor: VideoItem) => {
     const restantes = fila.slice(2);
     const vencedores = [...vencedoresRodada, vencedor];
 
+    const iniciarProximaRodada = (participantes: VideoItem[]) => {
+      const participantesEmbaralhados = embaralharArray(participantes);
+      setFila(participantesEmbaralhados);
+      setVencedoresRodada([]);
+      setDueloAtual(1);
+      setDuelosNaRodada(Math.ceil(participantesEmbaralhados.length / 2));
+      setRodadaSurpresaAtiva(esconderProximaRodada);
+      setEsconderProximaRodada(false);
+      setVideosRevelados([]);
+    };
+
     if (restantes.length === 0) {
       if (vencedores.length === 1) {
         setFila(vencedores);
         return;
       }
 
-      const proximaRodadaEmbaralhada = embaralharArray(vencedores);
-      
-      setFila(proximaRodadaEmbaralhada);
-      setVencedoresRodada([]);
-      setDueloAtual(1);
-      setDuelosNaRodada(Math.ceil(proximaRodadaEmbaralhada.length / 2));
-      setRodadaSurpresaAtiva(esconderProximaRodada);
-      setEsconderProximaRodada(false);
-      setVideosRevelados([]);
+      iniciarProximaRodada(vencedores);
       return;
     }
 
     if (restantes.length === 1) {
-      const proximaRodada = [...vencedores, restantes[0]];
-      
-      const proximaRodadaEmbaralhada = embaralharArray(proximaRodada);
-      
-      setFila(proximaRodadaEmbaralhada);
-      setVencedoresRodada([]);
-      setDueloAtual(1);
-      setDuelosNaRodada(Math.ceil(proximaRodadaEmbaralhada.length / 2));
-      setRodadaSurpresaAtiva(esconderProximaRodada);
-      setEsconderProximaRodada(false);
-      setVideosRevelados([]);
+      iniciarProximaRodada([...vencedores, restantes[0]]);
       return;
     }
 
@@ -210,7 +203,9 @@ const escolherVencedor = (vencedor: VideoItem, perdedor: VideoItem) => {
   return (
     <div style={{ textAlign: 'center', padding: '2rem' }}>
       <h1>THIS OR THAT</h1>
-      <p className="round-progress" aria-live="polite">Rodada {dueloAtual} de {duelosNaRodada}</p>
+      <div className="round-progress-container">
+        <p className="round-progress" aria-live="polite">Duelo {dueloAtual} de {duelosNaRodada}</p>
+      </div>
       <button
         type="button"
         className={esconderProximaRodada ? 'surprise-round-toggle is-active' : 'surprise-round-toggle'}
@@ -219,6 +214,11 @@ const escolherVencedor = (vencedor: VideoItem, perdedor: VideoItem) => {
       >
         {esconderProximaRodada ? 'Próxima rodada será surpresa ✓' : 'Esconder próxima rodada'}
       </button>
+      {esconderProximaRodada && (
+        <p className="surprise-round-status" role="status">
+          Ativado: os vídeos serão ocultados quando começar a próxima rodada.
+        </p>
+      )}
       {rodadaSurpresaAtiva && <p className="surprise-round-status">Rodada surpresa: revele os dois vídeos para votar.</p>}
       {mensagem && <p>{mensagem}</p>}
 
@@ -233,6 +233,7 @@ const escolherVencedor = (vencedor: VideoItem, perdedor: VideoItem) => {
           accent="red"
           hidden={rodadaSurpresaAtiva}
           revealed={videosRevelados.includes(video1.video_id)}
+          canChoose={duplaRevelada}
           onReveal={() => setVideosRevelados((atuais) => [...atuais, video1.video_id])}
           onClick={() => escolherVencedor(video1, video2)}
         />
@@ -243,6 +244,7 @@ const escolherVencedor = (vencedor: VideoItem, perdedor: VideoItem) => {
           accent="blue"
           hidden={rodadaSurpresaAtiva}
           revealed={videosRevelados.includes(video2.video_id)}
+          canChoose={duplaRevelada}
           onReveal={() => setVideosRevelados((atuais) => [...atuais, video2.video_id])}
           onClick={() => escolherVencedor(video2, video1)}
         />

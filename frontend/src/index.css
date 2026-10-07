@@ -80,6 +80,17 @@ input::placeholder {
 	background: transparent;
 }
 
+.tournament-card {
+	transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.tournament-card:hover,
+.tournament-card:focus-within {
+	transform: translateY(-5px);
+	border-color: #fff !important;
+	box-shadow: 0 14px 28px rgba(24, 32, 42, 0.45) !important;
+}
+
 .video-card {
 	transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
 }
@@ -127,6 +138,12 @@ input::placeholder {
 	font-size: 0.95rem;
 }
 
+.round-progress-container {
+	display: flex;
+	justify-content: center;
+	width: 100%;
+}
+
 .video-card__cover {
 	width: 100%;
 	aspect-ratio: 16 / 9;
@@ -140,6 +157,13 @@ input::placeholder {
 	gap: 0.65rem;
 	color: #f7f2ff;
 	font-weight: 700;
+	cursor: pointer;
+}
+
+.video-card__wait {
+	margin: 0.5rem 0 0;
+	color: #d8b4fe;
+	font-size: 0.85rem;
 }
 
 .video-card__cover-icon {
@@ -153,11 +177,6 @@ input::placeholder {
 	font-size: 1.4rem;
 }
 
-.video-card .video-card__reveal {
-	min-height: 38px;
-	padding: 0.45rem 1rem;
-	font-size: 0.85rem;
-}
 
 .duel-board {
 	display: flex;

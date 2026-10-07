@@ -10,12 +10,13 @@ interface VideoCardProps {
   onClick: () => void;
   hidden?: boolean;
   revealed?: boolean;
+  canChoose?: boolean;
   onReveal?: () => void;
   accent?: 'red' | 'blue';
   label?: string;
 }
 
-export default function VideoCard({ video, onClick, hidden = false, revealed = false, onReveal, accent = 'red', label }: VideoCardProps) {
+export default function VideoCard({ video, onClick, hidden = false, revealed = false, canChoose = true, onReveal, accent = 'red', label }: VideoCardProps) {
   const colors = {
     red: '#ffcccc',
     blue: '#ccccff',
@@ -30,12 +31,12 @@ export default function VideoCard({ video, onClick, hidden = false, revealed = f
       className={`video-card video-card-${accent}`}
       role="button"
       tabIndex={0}
-      aria-label={coberto ? `Revelar ${label ?? 'vídeo'}` : `Escolher ${titulo}`}
+      aria-label={coberto ? `Revelar ${label ?? 'vídeo'}` : canChoose ? `Escolher ${titulo}` : 'Revele os dois vídeos antes de votar'}
       onClick={() => {
-        if (!coberto) onClick();
+        if (!coberto && canChoose) onClick();
       }}
       onKeyDown={(event) => {
-        if (!coberto && (event.key === 'Enter' || event.key === ' ')) onClick();
+        if (!coberto && canChoose && (event.key === 'Enter' || event.key === ' ')) onClick();
       }}
       style={{
         padding: '1rem',
@@ -52,19 +53,24 @@ export default function VideoCard({ video, onClick, hidden = false, revealed = f
     >
       {label && <p style={{ margin: 0, fontWeight: 700, marginBottom: '0.75rem' }}>{label}</p>}
       {coberto ? (
-        <div className="video-card__cover" role="group" aria-label={`${label ?? 'Vídeo'} oculto`}>
-          <span aria-hidden="true" className="video-card__cover-icon">?</span>
-          <span>Vídeo oculto</span>
-          <button
-            type="button"
-            className="video-card__reveal"
-            onClick={(event) => {
+        <div
+          className="video-card__cover"
+          role="button"
+          tabIndex={0}
+          aria-label={`Clique para revelar ${label ?? 'vídeo'}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            onReveal?.();
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
               event.stopPropagation();
               onReveal?.();
-            }}
-          >
-            Revelar vídeo
-          </button>
+            }
+          }}
+        >
+          <span aria-hidden="true" className="video-card__cover-icon">?</span>
+          <span>Clique para revelar</span>
         </div>
       ) : videoId ? (
         <iframe
@@ -82,6 +88,7 @@ export default function VideoCard({ video, onClick, hidden = false, revealed = f
       <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', lineHeight: 1.25 }}>
         {coberto ? 'Título oculto' : titulo}
       </h3>
+      {!canChoose && !coberto && <p className="video-card__wait">Revele o outro vídeo para votar</p>}
     </article>
   );
 }
