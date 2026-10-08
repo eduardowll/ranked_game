@@ -46,6 +46,15 @@ export default function Arena() {
   const tamanhoDaChave = searchParams.get('tamanho') || 'max';
 
   useEffect(() => {
+  console.log('[Arena]', { esconderProximaRodada, rodadaSurpresaAtiva, dueloAtual, duelosNaRodada, fila: fila.length });
+  }, [esconderProximaRodada, rodadaSurpresaAtiva, dueloAtual, duelosNaRodada, fila.length]);
+
+  useEffect(() => {
+  console.log('[Arena] MONTOU');
+  return () => console.log('[Arena] DESMONTOU');
+  }, []);
+
+  useEffect(() => {
     if (!torneioId) {
       return;
     }
