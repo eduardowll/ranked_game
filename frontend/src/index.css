@@ -123,7 +123,7 @@ input::placeholder {
 }
 
 .surprise-round-toggle {
-	margin: 0.75rem 0;
+	margin: 0;
 	background: #21172e;
 	border-color: #7653a5;
 }
@@ -133,9 +133,25 @@ input::placeholder {
 	box-shadow: 0 0 0 3px rgba(159, 122, 234, 0.2);
 }
 
-.surprise-round-status {
-	color: #d8b4fe;
-	font-size: 0.95rem;
+.arena-round-actions {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+	margin: 0.75rem 0;
+}
+
+.undo-duel-button {
+	margin: 0;
+	background: #21172e;
+	border-color: #7653a5;
+}
+
+.undo-duel-button span {
+	margin-right: 0.35rem;
+	font-size: 1.2rem;
+	vertical-align: -1px;
 }
 
 .round-progress-container {
@@ -250,4 +266,23 @@ select:focus-visible {
 select option {
     background: #171020;
     color: #fff;
+}
+
+.video-card__choose {
+	width: 100%;
+}
+
+.video-card-red .video-card__choose {
+	background: #a23fd6;
+	border-color: #d9a2ff;
+}
+
+.video-card-blue .video-card__choose {
+	background: #5a4bd1;
+	border-color: #b5afff;
+}
+
+.video-card__choose:disabled {
+	background: #2a2036;
+	border-color: #4d3172;
 }
