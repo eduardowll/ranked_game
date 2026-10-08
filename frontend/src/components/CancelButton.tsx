@@ -7,17 +7,13 @@ export default function CancelButton({ onClick }: CancelButtonProps) {
     <button 
       type="button" 
       onClick={onClick}
+      className="arena-compact-button cancel-button"
       style={{ 
         position: 'fixed',
         bottom: '2rem',
         right: '2rem',
-        padding: '0.75rem 1.5rem', 
-        fontSize: '1rem', 
-        cursor: 'pointer', 
-        borderRadius: '8px',
         backgroundColor: '#6b21a8',
         color: '#fff',
-        border: 'none',
         fontWeight: 'bold',
         boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
         transition: 'background-color 0.2s',

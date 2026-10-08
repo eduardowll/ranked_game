@@ -249,8 +249,8 @@ export default function Arena() {
   };
 
   return (
-    <div style={{ textAlign: 'center', padding: '2rem' }}>
-      <h1>THIS OR THAT</h1>
+    <div className="arena-page">
+      <h1 className="arena-title">THIS OR THAT</h1>
       <div className="round-progress-container">
         <p className="round-progress" aria-live="polite">Duelo {dueloAtual} de {duelosNaRodada}</p>
       </div>

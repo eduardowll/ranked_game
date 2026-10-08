@@ -160,6 +160,91 @@ input::placeholder {
 	width: 100%;
 }
 
+.arena-page {
+	min-height: 100vh;
+	padding: 0.75rem 1rem 1rem;
+	text-align: center;
+}
+
+.arena-title {
+	margin: 0.25rem 0 0.5rem;
+	font-size: clamp(1.5rem, 4vw, 2rem);
+}
+
+.arena-page .round-progress {
+	margin: 0.25rem 0 0.5rem;
+	padding: 0.4rem 0.85rem;
+}
+
+.arena-page .arena-round-actions {
+	gap: 0.5rem;
+	margin: 0.25rem 0 0.5rem;
+}
+
+.arena-page .arena-round-actions button,
+.arena-page .arena-compact-button {
+	min-height: 38px;
+	padding: 0.45rem 0.9rem;
+	font-size: 0.88rem;
+}
+
+.arena-page .random-button {
+	margin: 0.25rem;
+}
+
+.arena-page .duel-board {
+	gap: 1rem;
+	margin-top: 0.75rem;
+}
+
+.arena-page .video-card {
+	width: min(320px, calc(50vw - 1.5rem));
+	max-width: 100%;
+	padding: 0.75rem !important;
+	border-radius: 20px !important;
+}
+
+.arena-page .video-card > p {
+	margin-bottom: 0.4rem !important;
+}
+
+.arena-page .video-card h3 {
+	margin: 0.45rem 0 !important;
+	font-size: 1rem !important;
+}
+
+.arena-page .video-card__choose {
+	min-height: 38px;
+	padding: 0.45rem 0.8rem;
+	font-size: 0.88rem;
+}
+
+.arena-page .cancel-button {
+	position: static !important;
+	margin: 0.25rem;
+	box-shadow: none !important;
+}
+
+@media (max-width: 640px) {
+	.arena-page {
+		padding: 0.5rem;
+	}
+
+	.arena-page .duel-board {
+		gap: 0.65rem;
+	}
+
+	.arena-page .video-card {
+		width: min(100%, 420px);
+	}
+
+	.arena-page .cancel-button {
+		position: fixed !important;
+		right: 0.75rem;
+		bottom: 0.75rem;
+	}
+}
+
 .video-card__cover {
 	width: 100%;
 	aspect-ratio: 16 / 9;
