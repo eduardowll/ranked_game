@@ -5,3 +5,6 @@
 !frontend/vercel.json
 __pycache__/
 *.py[cod]
+*.zip
+/scripts
+*.csv

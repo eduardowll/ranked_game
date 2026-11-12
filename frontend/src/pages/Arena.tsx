@@ -54,7 +54,6 @@ export default function Arena() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const torneioId = searchParams.get('torneioId');
-  const tamanhoDaChave = searchParams.get('tamanho') || 'max';
 
   useEffect(() => {
     if (!torneioId) {
@@ -87,7 +86,7 @@ export default function Arena() {
           }
         }
 
-        const dados = await api.iniciarPartida(idDoTorneio, tamanhoDaChave);
+        const dados = await api.iniciarPartida(idDoTorneio);
         setFila(dados.videos);
         setDueloAtual(dados.partida.duelo_atual);
         setDuelosNaRodada(dados.partida.duelos_na_rodada);
@@ -104,7 +103,7 @@ export default function Arena() {
     }
 
     prepararArena();
-  }, [torneioId, tamanhoDaChave]);
+  }, [torneioId]);
 
   useEffect(() => {
     if (!torneioId || !inicializada || fila.length === 0) return;
