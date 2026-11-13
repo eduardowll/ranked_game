@@ -4,9 +4,12 @@ interface ChampionCardProps {
   video: VideoItem;
   torneioId: string;
   mensagem?: string;
+  salvando?: boolean;
+  salvo?: boolean;
+  onRetry?: () => void;
 }
 
-export default function ChampionCard({ video, torneioId, mensagem }: ChampionCardProps) {
+export default function ChampionCard({ video, torneioId, mensagem, salvando = false, salvo = true, onRetry }: ChampionCardProps) {
   const titulo = video.nome || video.video_id;
 
   return (
@@ -20,10 +23,19 @@ export default function ChampionCard({ video, torneioId, mensagem }: ChampionCar
         style={{ width: 560, maxWidth: '90vw', aspectRatio: '16 / 9', border: 0, borderRadius: 12, marginBottom: '1rem' }}
       />
       <h2>{titulo}</h2>
+      {salvando && <p role="status">Salvando resultado no ranking...</p>}
+      {salvo && <p role="status">Resultado salvo no ranking.</p>}
       {mensagem && <p role="status">{mensagem}</p>}
+      {!salvo && !salvando && onRetry && (
+        <button type="button" onClick={onRetry} style={{ marginTop: '1rem' }}>
+          Tentar salvar novamente
+        </button>
+      )}
       <button
         type="button"
         onClick={() => { window.location.href = `/torneios/${torneioId}`; }}
+        disabled={!salvo || salvando}
+        aria-label="Voltar para torneio"
         style={{
           marginTop: '1rem',
           padding: '0.75rem 1.25rem',
@@ -31,10 +43,11 @@ export default function ChampionCard({ video, torneioId, mensagem }: ChampionCar
           borderRadius: '999px',
           background: '#6d3bb5',
           color: '#fff',
-          cursor: 'pointer',
+          cursor: salvo && !salvando ? 'pointer' : 'not-allowed',
+          opacity: salvo && !salvando ? 1 : 0.6,
         }}
       >
-        Voltar para torneio
+        {salvando ? 'Aguarde o salvamento...' : 'Voltar para torneio'}
       </button>
     </section>
   );

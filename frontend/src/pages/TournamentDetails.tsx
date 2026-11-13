@@ -11,6 +11,7 @@ export default function TournamentDetails({ torneioId }: TournamentDetailsProps)
   const [dados, setDados] = useState<TournamentDetailsResponse | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [pagina, setPagina] = useState(1);
+  const [tamanhoChave, setTamanhoChave] = useState('64');
   const itensPorPagina = 20;
 
   useEffect(() => {
@@ -34,7 +35,21 @@ export default function TournamentDetails({ torneioId }: TournamentDetailsProps)
       <p>Status: {dados.torneio.estado === 'em_andamento' ? 'Em andamento' : 'Jogar'}</p>
 
       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', margin: '1.5rem 0' }}>
-        <button type="button" onClick={() => { window.location.href = `/arena?torneioId=${dados.torneio.id}`; }}>
+        <select
+          aria-label="Tamanho do torneio"
+          value={tamanhoChave}
+          onChange={(event) => setTamanhoChave(event.target.value)}
+        >
+          <option value="16">16 músicas</option>
+          <option value="32">32 músicas</option>
+          <option value="64">64 músicas</option>
+          <option value="128">128 músicas</option>
+          <option value="256">256 músicas</option>
+          <option value="512">512 músicas</option>
+          <option value="max">Todas ({dados.torneio.video_ids.length})</option>
+        </select>
+
+        <button type="button" onClick={() => { window.location.href = `/arena?torneioId=${dados.torneio.id}&tamanho=${tamanhoChave}`; }}>
           Jogar torneio
         </button>
       </div>

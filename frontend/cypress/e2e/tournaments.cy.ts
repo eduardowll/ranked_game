@@ -3,6 +3,7 @@ import {
   paginaDeRanking,
   paginaDois,
   paginaUm,
+  respostaIniciarPartida,
   torneioRanking,
 } from '../support/mocks';
 
@@ -72,6 +73,24 @@ describe('Torneios e ranking', () => {
     cy.visit(caminhoDetalhes);
     cy.wait('@paginaInicial');
     cy.get(cartaoRanking).first().should('contain.text', '0%');
+  });
+
+  it('passes the selected bracket size to the Arena', () => {
+    cy.intercept(
+      { method: 'GET', pathname: caminhoDetalhes, resourceType: /xhr|fetch/ },
+      paginaDeRanking(paginaUm, 1),
+    ).as('detalhesTorneio');
+    cy.intercept(
+      { method: 'GET', pathname: `/torneios/${idTorneioRanking}/jogar`, resourceType: /xhr|fetch/ },
+      respostaIniciarPartida,
+    ).as('iniciarArena');
+
+    cy.visit(caminhoDetalhes);
+    cy.wait('@detalhesTorneio');
+    cy.get('select[aria-label="Tamanho do torneio"]').select('16');
+    cy.contains('Jogar torneio').click();
+    cy.location('search').should('contain', 'tamanho=16');
+    cy.wait('@iniciarArena');
   });
 
   it('trata erro 500 da API sem quebrar a página', () => {

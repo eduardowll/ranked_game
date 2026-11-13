@@ -16,6 +16,8 @@ interface DuelStateSnapshot {
   esconderProximoDuelo?: boolean;
   dueloSurpresaAtivo?: boolean;
   videosRevelados?: string[];
+  dueloDeClassificacao?: boolean;
+  byesNaClassificatoria?: number;
 }
 
 interface ArenaSnapshot extends DuelStateSnapshot {
@@ -23,6 +25,14 @@ interface ArenaSnapshot extends DuelStateSnapshot {
   // Nomes antigos, mantidos só para ler snapshots salvos antes da mudança
   esconderProximaRodada?: boolean;
   rodadaSurpresaAtiva?: boolean;
+}
+
+interface ChavePreparada {
+  participantes: VideoItem[];
+  fila: VideoItem[];
+  byes: VideoItem[];
+  duelosNaRodada: number;
+  dueloDeClassificacao: boolean;
 }
 
 const embaralharArray = (array: VideoItem[]) => {
@@ -34,6 +44,31 @@ const embaralharArray = (array: VideoItem[]) => {
   return novoArray;
 };
 
+function prepararChave(videos: VideoItem[], tamanho: string): ChavePreparada {
+  const embaralhados = embaralharArray(videos);
+  const limite = tamanho === 'max' ? embaralhados.length : Number.parseInt(tamanho, 10);
+  const participantes = embaralhados.slice(0, Number.isFinite(limite) ? Math.min(limite, embaralhados.length) : embaralhados.length);
+
+  if (participantes.length < 2) {
+    return { participantes, fila: participantes, byes: [], duelosNaRodada: 0, dueloDeClassificacao: false };
+  }
+
+  const tamanhoChaveCompleta = 2 ** Math.ceil(Math.log2(participantes.length));
+  const byesCount = tamanhoChaveCompleta === participantes.length
+    ? 0
+    : tamanhoChaveCompleta - participantes.length;
+  const byes = participantes.slice(0, byesCount);
+  const fila = participantes.slice(byesCount);
+
+  return {
+    participantes,
+    fila,
+    byes,
+    duelosNaRodada: Math.floor(fila.length / 2),
+    dueloDeClassificacao: byes.length > 0,
+  };
+}
+
 export default function Arena() {
   const [fila, setFila] = useState<VideoItem[]>([]);
   const [vencedoresRodada, setVencedoresRodada] = useState<VideoItem[]>([]);
@@ -41,11 +76,16 @@ export default function Arena() {
   const [duelosNaRodada, setDuelosNaRodada] = useState(1);
   const [carregando, setCarregando] = useState(true);
   const [mensagem, setMensagem] = useState('');
+  const [salvandoResultado, setSalvandoResultado] = useState(true);
+  const [resultadoPersistido, setResultadoPersistido] = useState(false);
+  const [tentativaSalvarResultado, setTentativaSalvarResultado] = useState(0);
   const [estatisticas, setEstatisticas] = useState<Record<string, MatchStats>>({});
   // "Armado": o PRÓXIMO duelo vai começar escondido
   const [esconderProximoDuelo, setEsconderProximoDuelo] = useState(false);
   // O duelo que está na tela agora está escondido
   const [dueloSurpresaAtivo, setDueloSurpresaAtivo] = useState(false);
+  const [dueloDeClassificacao, setDueloDeClassificacao] = useState(false);
+  const [byesNaClassificatoria, setByesNaClassificatoria] = useState(0);
   const [videosRevelados, setVideosRevelados] = useState<string[]>([]);
   const [historicoDuelos, setHistoricoDuelos] = useState<DuelStateSnapshot[]>([]);
   const [inicializada, setInicializada] = useState(false);
@@ -54,6 +94,7 @@ export default function Arena() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const torneioId = searchParams.get('torneioId');
+  const tamanhoDaChave = searchParams.get('tamanho') || 'max';
 
   useEffect(() => {
     if (!torneioId) {
@@ -61,11 +102,13 @@ export default function Arena() {
     }
 
     const idDoTorneio = torneioId;
-    const storageKey = `this-that:arena:${idDoTorneio}`;
+    const storageKey = `this-that:arena:${idDoTorneio}:${tamanhoDaChave}`;
+    const legacyStorageKey = `this-that:arena:${idDoTorneio}`;
 
     async function prepararArena() {
       try {
-        const snapshotSalvo = window.localStorage.getItem(storageKey);
+        const snapshotSalvo = window.localStorage.getItem(storageKey)
+          ?? (tamanhoDaChave === 'max' ? window.localStorage.getItem(legacyStorageKey) : null);
         if (snapshotSalvo) {
           try {
             const snapshot = JSON.parse(snapshotSalvo) as ArenaSnapshot;
@@ -75,10 +118,16 @@ export default function Arena() {
               setDueloAtual(snapshot.dueloAtual);
               setDuelosNaRodada(snapshot.duelosNaRodada);
               setEstatisticas(snapshot.estatisticas);
+              setDueloDeClassificacao(snapshot.dueloDeClassificacao ?? false);
+              setByesNaClassificatoria(snapshot.byesNaClassificatoria ?? 0);
               setEsconderProximoDuelo(snapshot.esconderProximoDuelo ?? snapshot.esconderProximaRodada ?? false);
               setDueloSurpresaAtivo(snapshot.dueloSurpresaAtivo ?? snapshot.rodadaSurpresaAtiva ?? false);
               setVideosRevelados(snapshot.videosRevelados ?? []);
               setHistoricoDuelos(snapshot.historicoDuelos ?? []);
+              if (!window.localStorage.getItem(storageKey) && snapshotSalvo) {
+                window.localStorage.setItem(storageKey, snapshotSalvo);
+                window.localStorage.removeItem(legacyStorageKey);
+              }
               return;
             }
           } catch {
@@ -87,10 +136,14 @@ export default function Arena() {
         }
 
         const dados = await api.iniciarPartida(idDoTorneio);
-        setFila(dados.videos);
-        setDueloAtual(dados.partida.duelo_atual);
-        setDuelosNaRodada(dados.partida.duelos_na_rodada);
-        setEstatisticas(Object.fromEntries(dados.videos.map((video) => [
+        const chave = prepararChave(dados.videos, tamanhoDaChave);
+        setFila(chave.fila);
+        setVencedoresRodada(chave.byes);
+        setDueloAtual(1);
+        setDuelosNaRodada(chave.duelosNaRodada);
+        setDueloDeClassificacao(chave.dueloDeClassificacao);
+        setByesNaClassificatoria(chave.byes.length);
+        setEstatisticas(Object.fromEntries(chave.participantes.map((video) => [
           video.video_id,
           { duelos_jogados: 0, duelos_vencidos: 0 },
         ])));
@@ -103,7 +156,7 @@ export default function Arena() {
     }
 
     prepararArena();
-  }, [torneioId]);
+  }, [torneioId, tamanhoDaChave]);
 
   useEffect(() => {
     if (!torneioId || !inicializada || fila.length === 0) return;
@@ -116,25 +169,34 @@ export default function Arena() {
       estatisticas,
       esconderProximoDuelo,
       dueloSurpresaAtivo,
+      dueloDeClassificacao,
+      byesNaClassificatoria,
       videosRevelados,
       historicoDuelos,
     };
-    window.localStorage.setItem(`this-that:arena:${torneioId}`, JSON.stringify(snapshot));
-  }, [dueloAtual, duelosNaRodada, dueloSurpresaAtivo, esconderProximoDuelo, estatisticas, fila, historicoDuelos, inicializada, torneioId, vencedoresRodada, videosRevelados]);
+    window.localStorage.setItem(`this-that:arena:${torneioId}:${tamanhoDaChave}`, JSON.stringify(snapshot));
+  }, [dueloAtual, duelosNaRodada, dueloDeClassificacao, byesNaClassificatoria, dueloSurpresaAtivo, esconderProximoDuelo, estatisticas, fila, historicoDuelos, inicializada, tamanhoDaChave, torneioId, vencedoresRodada, videosRevelados]);
 
   useEffect(() => {
     if (!torneioId || fila.length !== 1 || resultadoSalvo.current === fila[0].video_id) return;
 
     const campeaoId = fila[0].video_id;
     resultadoSalvo.current = campeaoId;
+    setSalvandoResultado(true);
+    setResultadoPersistido(false);
+    setMensagem('');
     api.salvarResultadoTorneio(torneioId, campeaoId, estatisticas)
-      .then(() => window.localStorage.removeItem(`this-that:arena:${torneioId}`))
+      .then(() => {
+        window.localStorage.removeItem(`this-that:arena:${torneioId}:${tamanhoDaChave}`);
+        setResultadoPersistido(true);
+      })
       .catch((erro) => {
         resultadoSalvo.current = null;
         console.error('Erro ao salvar resultado do torneio:', erro);
         setMensagem('Campeão definido localmente, mas não foi possível salvar o resultado.');
-      });
-  }, [estatisticas, fila, torneioId]);
+      })
+      .finally(() => setSalvandoResultado(false));
+  }, [estatisticas, fila, tamanhoDaChave, tentativaSalvarResultado, torneioId]);
 
   const escolherVencedor = (vencedor: VideoItem, perdedor: VideoItem) => {
     const estadoAnterior: DuelStateSnapshot = {
@@ -145,6 +207,8 @@ export default function Arena() {
       estatisticas,
       esconderProximoDuelo,
       dueloSurpresaAtivo,
+      dueloDeClassificacao,
+      byesNaClassificatoria,
       videosRevelados,
     };
     setHistoricoDuelos((historico) => [...historico, estadoAnterior].slice(-2));
@@ -177,6 +241,8 @@ export default function Arena() {
       setVencedoresRodada([]);
       setDueloAtual(1);
       setDuelosNaRodada(Math.ceil(participantesEmbaralhados.length / 2));
+      setDueloDeClassificacao(false);
+      setByesNaClassificatoria(0);
     };
 
     if (restantes.length === 0) {
@@ -214,6 +280,8 @@ export default function Arena() {
     setEstatisticas(estadoAnterior.estatisticas);
     setEsconderProximoDuelo(estadoAnterior.esconderProximoDuelo ?? false);
     setDueloSurpresaAtivo(estadoAnterior.dueloSurpresaAtivo ?? false);
+    setDueloDeClassificacao(estadoAnterior.dueloDeClassificacao ?? false);
+    setByesNaClassificatoria(estadoAnterior.byesNaClassificatoria ?? 0);
     setVideosRevelados(estadoAnterior.videosRevelados ?? []);
     setHistoricoDuelos((historico) => historico.slice(0, -1));
     setMensagem('');
@@ -224,7 +292,19 @@ export default function Arena() {
   if (fila.length === 0) return <h2>Nenhum vídeo encontrado.</h2>;
 
   if (fila.length === 1) {
-    return <ChampionCard video={fila[0]} torneioId={torneioId} mensagem={mensagem} />;
+    return (
+      <ChampionCard
+        video={fila[0]}
+        torneioId={torneioId}
+        mensagem={mensagem}
+        salvando={salvandoResultado}
+        salvo={resultadoPersistido}
+        onRetry={() => {
+          resultadoSalvo.current = null;
+          setTentativaSalvarResultado((tentativa) => tentativa + 1);
+        }}
+      />
+    );
   }
 
   const video1 = fila[0];
@@ -242,7 +322,7 @@ export default function Arena() {
 
   const interromperPartida = () => {
     if (window.confirm('Deseja realmente sair? O progresso desta partida será apagado.')) {
-      window.localStorage.removeItem(`this-that:arena:${torneioId}`);
+      window.localStorage.removeItem(`this-that:arena:${torneioId}:${tamanhoDaChave}`);
       navigate(`/torneios/${torneioId}`);
     }
   };
@@ -251,7 +331,11 @@ export default function Arena() {
     <div className="arena-page">
       <h1 className="arena-title">THIS OR THAT</h1>
       <div className="round-progress-container">
-        <p className="round-progress" aria-live="polite">Duelo {dueloAtual} de {duelosNaRodada}</p>
+        <p className="round-progress" aria-live="polite">
+          {dueloDeClassificacao
+            ? `Classificatória · Duelo ${dueloAtual} de ${duelosNaRodada} · ${byesNaClassificatoria} avançam sem duelo`
+            : `Duelo ${dueloAtual} de ${duelosNaRodada}`}
+        </p>
       </div>
       <div className="arena-round-actions">
         <button
