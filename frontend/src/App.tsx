@@ -3,6 +3,7 @@ import Arena from './pages/Arena';
 import Tournaments from './pages/Tournaments';
 import TournamentDetails from './pages/TournamentDetails';
 import VideoCatalog from './pages/VideoCatalog';
+import AddMusic from './pages/AddMusic';
 
 export default function App() {
   return (
@@ -12,6 +13,7 @@ export default function App() {
           <Route path="/torneios" element={<Tournaments />} />
           <Route path="/torneios/:torneioId" element={<TournamentDetailsRoute />} />
           <Route path="/musicas" element={<VideoCatalog />} />
+          <Route path="/musicas/adicionar" element={<AddMusic />} />
           <Route path="/arena" element={<Arena />} />
           <Route path="*" element={<Navigate to="/torneios" replace />} />
         </Routes>

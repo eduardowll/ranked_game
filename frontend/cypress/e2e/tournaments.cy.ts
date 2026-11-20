@@ -93,6 +93,22 @@ describe('Torneios e ranking', () => {
     cy.wait('@iniciarArena');
   });
 
+  it('navigates from the existing add-music button to the dedicated page', () => {
+    cy.intercept(
+      { method: 'GET', pathname: '/torneios', resourceType: /xhr|fetch/ },
+      [],
+    ).as('listarTorneios');
+
+    cy.visit('/torneios');
+    cy.wait('@listarTorneios');
+    cy.contains('button', 'Adicionar música').click();
+
+    cy.location('pathname').should('eq', '/musicas/adicionar');
+    cy.contains('h1', 'Encontre a próxima música').should('be.visible');
+    cy.contains('Login necessário').should('be.visible');
+    cy.get('input[placeholder="Ex.: Super Shy"]').should('be.disabled');
+  });
+
   it('trata erro 500 da API sem quebrar a página', () => {
     cy.intercept(
       { method: 'GET', pathname: '/torneios', resourceType: /xhr|fetch/ },

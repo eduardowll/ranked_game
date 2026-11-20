@@ -33,9 +33,7 @@ function cacheAtualizadoRecentemente(): boolean {
 export default function Tournaments() {
   const { user } = useAuth();
   const [torneios, setTorneios] = useState<TournamentItem[]>(() => lerTorneiosCache());
-  const [mostrarCadastro, setMostrarCadastro] = useState(false);
   const [mostrarCriacao, setMostrarCriacao] = useState(false);
-  const [url, setUrl] = useState('');
   const [titulo, setTitulo] = useState('');
   const [mensagem, setMensagem] = useState('');
   const [carregando, setCarregando] = useState(() => !cacheAtualizadoRecentemente() && lerTorneiosCache().length === 0);
@@ -61,17 +59,6 @@ export default function Tournaments() {
         }
       });
   }, []);
-
-  const cadastrarMusica = async (event: FormEvent) => {
-    event.preventDefault();
-    try {
-      const video = await api.cadastrarVideo(url);
-      setUrl('');
-      setMensagem(`Música cadastrada: ${video.nome}`);
-    } catch {
-      setMensagem('Não foi possível cadastrar essa URL.');
-    }
-  };
 
   const criarTorneio = async (event: FormEvent) => {
     event.preventDefault();
@@ -103,25 +90,12 @@ export default function Tournaments() {
         <h1>Meus torneios</h1>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           <AuthButton />
-          <button type="button" disabled={!user} onClick={() => setMostrarCadastro((atual) => !atual)}>Adicionar música</button>
+          <button type="button" onClick={() => { window.location.href = '/musicas/adicionar'; }}>Adicionar música</button>
           <button type="button" onClick={() => { window.location.href = '/musicas'; }}>Catálogo</button>
           <button type="button" disabled={!user} onClick={() => setMostrarCriacao((atual) => !atual)}>Criar torneio</button>
         </div>
       </div>
       {mensagem && <p role="status">{mensagem}</p>}
-
-      {mostrarCadastro && user && (
-        <form onSubmit={cadastrarMusica} style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', margin: '1rem 0 2rem' }}>
-          <input
-            value={url}
-            onChange={(event) => setUrl(event.target.value)}
-            placeholder="Cole a URL do YouTube"
-            required
-            style={{ flex: '1 1 320px', padding: '0.75rem' }}
-          />
-          <button type="submit">Salvar música</button>
-        </form>
-      )}
 
       {mostrarCriacao && (
         <form onSubmit={criarTorneio} style={{ margin: '1rem 0 2rem', padding: '1rem', border: '1px solid #ddd', borderRadius: 12 }}>

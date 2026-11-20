@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import List, Literal, Optional
 
 # ---------------------------------------------------------
@@ -29,6 +29,18 @@ class TournamentTheme(BaseModel):
 class VideoCreate(BaseModel):
     """Quando o usuário cadastra um vídeo novo no banco"""
     url_youtube: str
+
+class YouTubeSearchRequest(BaseModel):
+    musica: str = Field(min_length=1, max_length=120)
+    artista: str = Field(min_length=1, max_length=120)
+
+    @field_validator('musica', 'artista')
+    @classmethod
+    def campos_nao_podem_ser_vazios(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError('Preencha o nome da música e do artista.')
+        return value
 
 class VideoUpdate(BaseModel):
     """Nova URL para uma música já cadastrada."""

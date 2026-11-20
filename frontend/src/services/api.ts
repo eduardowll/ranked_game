@@ -22,6 +22,18 @@ export interface VideoItem {
   nome: string;
 }
 
+export interface YouTubeSearchCandidate {
+  video_id: string;
+  titulo: string;
+  canal: string;
+  thumbnail: string;
+  url: string;
+  tipo: string;
+  descricao: string;
+  recomendado: boolean;
+  ja_cadastrado: boolean;
+}
+
 export interface TournamentItem {
   id: string;
   titulo: string;
@@ -93,6 +105,17 @@ export const api = {
   listarVideos: async (): Promise<VideoItem[]> => {
     const resposta = await fetch(`${BASE_URL}/videos`);
     return parseResponse<VideoItem[]>(resposta);
+  },
+
+  buscarMusicas: async (musica: string, artista: string): Promise<YouTubeSearchCandidate[]> => {
+    const headers = await authHeaders();
+    const resposta = await fetch(`${BASE_URL}/videos/buscar`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...headers },
+      body: JSON.stringify({ musica, artista }),
+    });
+    const resultado = await parseResponse<{ items: YouTubeSearchCandidate[] }>(resposta);
+    return resultado.items;
   },
 
   cadastrarVideo: async (urlYoutube: string): Promise<VideoItem> => {

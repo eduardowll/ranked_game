@@ -7,6 +7,7 @@ from urllib import request, error
 from src.repositories.tournament_repository import TournamentRepository
 from src.repositories.video_repository import VideoRepository
 from src.models.tournament import VideoItem, TournamentTheme
+from src.services.youtube_search_service import search_youtube_videos
 
 class TournamentService:
     def __init__(self):
@@ -111,6 +112,13 @@ class TournamentService:
         video = self.ensure_video_exists(raw_value)
         self.tournament_repo.add_video_to_all_tournaments(video.video_id)
         return video
+
+    def search_music_candidates(self, musica: str, artista: str) -> List[dict]:
+        """Busca candidatos no YouTube e marca os que já estão no catálogo global."""
+        candidates = search_youtube_videos(musica, artista)
+        for candidate in candidates:
+            candidate['ja_cadastrado'] = bool(self.video_repo.get_video(candidate['video_id']))
+        return candidates
 
     def update_video(self, old_video_id: str, raw_value: str) -> VideoItem:
         """Troca a URL de uma música e atualiza seu título pelo resultado do YouTube."""

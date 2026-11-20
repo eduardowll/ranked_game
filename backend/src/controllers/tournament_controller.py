@@ -2,7 +2,8 @@ from fastapi import APIRouter, HTTPException, Query
 from src.auth import get_current_user
 from fastapi import Depends
 from src.services.tournament_service import TournamentService
-from src.models.tournament import VideoCreate, VideoUpdate, TournamentCreate, MatchupResult, TournamentFinalResult
+from src.models.tournament import VideoCreate, VideoUpdate, TournamentCreate, MatchupResult, TournamentFinalResult, YouTubeSearchRequest
+from src.services.youtube_search_service import YouTubeSearchUnavailable
 
 # Cria o roteador para este módulo
 router = APIRouter(tags=["Torneios"])
@@ -24,10 +25,21 @@ def criar_torneio(dados: TournamentCreate, usuario: dict = Depends(get_current_u
 @router.post("/videos", status_code=201)
 def cadastrar_video(dados: VideoCreate, usuario: dict = Depends(get_current_user)):
     try:
+        video_id = service.normalize_video_id(dados.url_youtube)
+        if service.video_repo.get_video(video_id):
+            raise HTTPException(status_code=409, detail='Essa música já está cadastrada no catálogo.')
         video = service.add_video_to_catalog(dados.url_youtube)
         return video
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/videos/buscar")
+def buscar_musicas(dados: YouTubeSearchRequest, usuario: dict = Depends(get_current_user)):
+    try:
+        candidatos = service.search_music_candidates(dados.musica.strip(), dados.artista.strip())
+        return {'items': candidatos}
+    except YouTubeSearchUnavailable as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
 
 @router.get("/videos")
 def listar_videos():
